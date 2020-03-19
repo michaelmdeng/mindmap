@@ -1,0 +1,71 @@
+# Created by https://www.gitignore.io/api/vim,sbt,scala,bloop,metals
+# Edit at https://www.gitignore.io/?templates=vim,sbt,scala,bloop,metals
+
+### Bloop ###
+.bloop/
+
+### Metals ###
+.metals/
+
+### SBT ###
+# Simple Build Tool
+# http://www.scala-sbt.org/release/docs/Getting-Started/Directories.html#configuring-version-control
+
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib/
+
+### Scala ###
+*.class
+*.log
+*.metals
+
+### Vim ###
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+*~
+
+# Auto-generated tag files
+tags
+
+# Persistent undo
+[._]*.un~
+
+# Coc configuration directory
+.vim
+
+### Tags ###
+# Ignore tags created by etags, ctags, gtags (GNU global) and cscope
+TAGS
+.TAGS
+!TAGS/
+tags
+.tags
+!tags/
+gtags.files
+GTAGS
+GRTAGS
+GPATH
+GSYMS
+cscope.files
+cscope.out
+cscope.in.out
+cscope.po.out
+
