@@ -17,6 +17,7 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+project/target/
 .history
 .cache
 .lib/
@@ -68,4 +69,3 @@ cscope.files
 cscope.out
 cscope.in.out
 cscope.po.out
-

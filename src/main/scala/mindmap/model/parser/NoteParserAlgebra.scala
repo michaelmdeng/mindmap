@@ -4,8 +4,6 @@ import mindmap.model.Note
 
 trait NoteParserAlgebra[F[_]]
     extends ContentParserAlgebra[F]
-    with LinkParserAlgebra[F]
-    with MetadataParserAlgebra[F]
-    with TagParserAlgebra[F] {
+    with MetadataParserAlgebra[F] {
   def parseNote(): F[Note]
 }
