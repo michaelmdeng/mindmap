@@ -2,7 +2,6 @@ package mindmap.model
 
 import cats.Show
 import cats.Eq
-import cats.data.Chain
 import java.time.LocalDateTime
 
 case class Note(

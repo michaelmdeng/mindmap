@@ -1,7 +1,6 @@
 package mindmap.effect.generator
 
 import cats.MonadError
-import cats.data.Chain
 import cats.implicits._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
@@ -44,12 +43,11 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
       paragraphs
         .map(paragraph => {
           paragraph match {
-            case TagBlock(ts) => ts
-            case _ => Set()
+            case TagBlock(ts) => ts.toSet
+            case _ => Set[Tag]()
           }
         })
-        .flatten
-        .toSet
+        .reduce(_ ++ _)
     }
 
   private def isInternalLink(link: UnresolvedLink): Boolean = {
@@ -66,7 +64,7 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
     }) && !link.to.startsWith("#")
   }
 
-  private def parseLinks(content: String): F[Chain[UnresolvedLink]] =
+  private def parseLinks(content: String): F[List[UnresolvedLink]] =
     for {
       _ <- MonadError[F, Throwable].unit
       paragraphs <- parseParagraphs(content)
@@ -90,7 +88,7 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
         .sequence
         .map(_.flatten)
     } yield {
-      Chain.fromSeq(links.filter(isInternalLink(_)))
+      links.filter(isInternalLink(_))
     }
 
   def generate(collection: Collection): F[Zettelkasten] =
@@ -127,17 +125,13 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
         .map(_.flatten)
     } yield {
       val tagLinks = noteTags.flatMap {
-        case (note, tags) =>
-          Chain.fromSeq(tags.map(ResolvedLink(_, note)).toSeq)
+        case (note, tags) => tags.map(ResolvedLink(_, note))
       }
-      val tags = Chain.fromSeq(
-        noteTags
-          .map {
-            case (_, tags) => tags
-          }
-          .foldLeft(Set[Tag]())(_ ++ _)
-          .toSeq
-      )
+      val tags = noteTags
+        .map {
+          case (_, tags) => tags
+        }
+        .reduce(_ ++ _)
       val links = noteLinks ++ tagLinks
 
       Zettelkasten(notes = collection.notes, links = links, tags = tags)
