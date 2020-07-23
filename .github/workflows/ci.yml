@@ -19,6 +19,5 @@ jobs:
         java-version: 1.8
     - name: Format code
       run: sbt ";compile;scalafmt;test:compile;test:scalafmt" && git diff --quiet
-      continue-on-error: true
     - name: Run tests
       run: sbt test
