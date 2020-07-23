@@ -1,6 +1,7 @@
 package mindmap.effect.generator
 
 import cats.MonadError
+import cats.effect.Effect
 import cats.implicits._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
@@ -9,6 +10,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
 import mindmap.model.ResolvedLink
 import mindmap.model.Tag
@@ -23,18 +25,21 @@ import mindmap.model.parser.markdown.Paragraph
 import mindmap.model.parser.markdown.TagBlock
 import mindmap.model.parser.markdown.TextParagraph
 
-class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
-    extends GeneratorAlgebra[F] {
+class MarkdownGenerator[F[_]: Effect[?[_]]] extends GeneratorAlgebra[F] {
   private def logger = Logger.getLogger(this.getClass())
 
-  private def parseParagraphs(content: String): F[List[Paragraph]] = {
-    val blockParsers = new BlockParsers()
-    blockParsers.parse(blockParsers.blocks, content) match {
-      case blockParsers.Success(bs, _) => blockParsers.mergeBlocks(bs).pure[F]
-      case e: blockParsers.NoSuccess =>
-        (new Exception(e.msg)).raiseError[F, List[Paragraph]]
-    }
-  }
+  private val blockParsers = new BlockParsers with LoggingParsers {}
+  private val linkParsers = new LinkParsers() with LoggingParsers {}
+
+  private def parseParagraphs(content: String): F[List[Paragraph]] =
+    for {
+      result <- blockParsers.parseAndLog(blockParsers.blocks, content, "blocks")
+      paragraphs <- result match {
+        case blockParsers.Success(bs, _) => blockParsers.mergeBlocks(bs).pure[F]
+        case e: blockParsers.NoSuccess =>
+          (new Exception(e.msg)).raiseError[F, List[Paragraph]]
+      }
+    } yield (paragraphs)
 
   private def parseTags(content: String): F[Set[Tag]] =
     for {
@@ -64,32 +69,33 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
     }) && !link.to.startsWith("#")
   }
 
-  private def parseLinks(content: String): F[List[UnresolvedLink]] =
+  private def parseParagraphLinks(paragraph: String): F[List[UnresolvedLink]] =
+    for {
+      result <- linkParsers.parseAndLog(linkParsers.links, paragraph, "links")
+      links <- result match {
+        case linkParsers.Success(ls, _) => ls.pure[F]
+        case e: linkParsers.NoSuccess =>
+          (new Exception(e.msg)).raiseError[F, List[UnresolvedLink]]
+      }
+    } yield (links)
+
+  private def parseLinks(content: String): F[List[UnresolvedLink]] = {
     for {
       _ <- MonadError[F, Throwable].unit
       paragraphs <- parseParagraphs(content)
-      linkParsers = new LinkParsers()
       links <- paragraphs
         .map(paragraph => {
-          val getParagraphLinks = (s: String) => {
-            linkParsers.parse(linkParsers.links, s) match {
-              case linkParsers.Success(ls, _) => ls.pure[F]
-              case e: linkParsers.NoSuccess =>
-                (new Exception(e.msg)).raiseError[F, List[UnresolvedLink]]
-            }
-          }
           paragraph match {
-            case TextParagraph(s) => getParagraphLinks(s)
-            case Header(h, _) => getParagraphLinks(h)
-            case BlockQuote(q) => getParagraphLinks(q)
+            case TextParagraph(s) => parseParagraphLinks(s)
+            case Header(h, _) => parseParagraphLinks(h)
+            case BlockQuote(q) => parseParagraphLinks(q)
             case _ => List[UnresolvedLink]().pure[F]
           }
         })
         .sequence
         .map(_.flatten)
-    } yield {
-      links.filter(isInternalLink(_))
-    }
+    } yield (links.filter(isInternalLink(_)))
+  }
 
   def generate(collection: Collection): F[Zettelkasten] =
     for {

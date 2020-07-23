@@ -1,5 +1,6 @@
-package mindmap.model.parser.markdown
+package mindmap.model.parser
 
+import cats.implicits._
 import scala.util.parsing.combinator.RegexParsers
 
 trait SharedParsers extends RegexParsers {

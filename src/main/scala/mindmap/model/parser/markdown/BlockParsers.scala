@@ -4,6 +4,7 @@ import scala.util.parsing.combinator.RegexParsers
 
 import mindmap.model.Strings._
 import mindmap.model.Tag
+import mindmap.model.parser.SharedParsers
 
 class BlockParsers extends SharedParsers {
   override def skipWhitespace: Boolean = false
