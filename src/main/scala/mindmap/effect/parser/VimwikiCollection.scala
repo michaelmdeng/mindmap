@@ -1,7 +1,6 @@
 package mindmap.effect.parser
 
 import cats.Parallel
-import cats.data.Chain
 import cats.effect.ContextShift
 import cats.effect.Effect
 import cats.implicits._
@@ -52,5 +51,5 @@ object VimwikiCollection {
             .handleError(e => List())
         })
         .parFlatSequence
-    } yield (Collection(Chain.fromSeq(notes)))
+    } yield (Collection(notes))
 }
