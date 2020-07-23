@@ -1,6 +1,8 @@
 package mindmap.effect.generator
 
 import cats.MonadError
+import cats.Parallel
+import cats.effect.ContextShift
 import cats.effect.Effect
 import cats.implicits._
 import java.net.URI
@@ -10,6 +12,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import mindmap.effect.Logging
 import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
 import mindmap.model.ResolvedLink
@@ -25,8 +28,9 @@ import mindmap.model.parser.markdown.Paragraph
 import mindmap.model.parser.markdown.TagBlock
 import mindmap.model.parser.markdown.TextParagraph
 
-class MarkdownGenerator[F[_]: Effect[?[_]]] extends GeneratorAlgebra[F] {
-  private def logger = Logger.getLogger(this.getClass())
+class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
+    extends GeneratorAlgebra[F] {
+  private def logger = new Logging(this.getClass())
 
   private val blockParsers = new BlockParsers with LoggingParsers {}
   private val linkParsers = new LinkParsers() with LoggingParsers {}
@@ -101,13 +105,23 @@ class MarkdownGenerator[F[_]: Effect[?[_]]] extends GeneratorAlgebra[F] {
     for {
       noteTags <- collection.notes
         .map(note => {
-          MonadError[F, Throwable].tuple2(note.pure[F], parseTags(note.content))
+          MonadError[F, Throwable].tuple2(
+            note.pure[F],
+            logger.action(f"parse tags for note: ${note.title}")(
+              parseTags(note.content)
+            )
+          )
         })
-        .sequence
+        .parSequence
       noteLinks <- collection.notes
         .map(note => {
           MonadError[F, Throwable]
-            .tuple2(note.pure[F], parseLinks(note.content))
+            .tuple2(
+              note.pure[F],
+              logger.action(f"parse links for note: ${note.title}")(
+                parseLinks(note.content)
+              )
+            )
             .map {
               case (note, unresolvedLinks) => {
                 unresolvedLinks
@@ -117,7 +131,7 @@ class MarkdownGenerator[F[_]: Effect[?[_]]] extends GeneratorAlgebra[F] {
                     resolvedNote match {
                       case Some(resolved) => Some(ResolvedLink(note, resolved))
                       case None => {
-                        logger.info(
+                        logger.logger.info(
                           f"Could not resolve link for ${unresolved} in ${note.title}"
                         )
                         None
@@ -127,8 +141,7 @@ class MarkdownGenerator[F[_]: Effect[?[_]]] extends GeneratorAlgebra[F] {
               }
             }
         })
-        .sequence
-        .map(_.flatten)
+        .parFlatSequence
     } yield {
       val tagLinks = noteTags.flatMap {
         case (note, tags) => tags.map(ResolvedLink(_, note))
