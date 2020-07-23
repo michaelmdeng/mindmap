@@ -26,7 +26,8 @@ class BlockParsersSpec extends AnyFunSpec {
     val tags = TagBlock(List(Tag("foo"), Tag("bar")))
     val tagsWithSpaces = TagBlock(tags.tags ++ List(Tag("tag with space")))
     val tagLine = ":" + tags.tags.map(_.name).mkString(":") + ":"
-    val tagLineWithSpaces = ":" + tagsWithSpaces.tags.map(_.name).mkString(":") + ":"
+    val tagLineWithSpaces =
+      ":" + tagsWithSpaces.tags.map(_.name).mkString(":") + ":"
 
     it("should parse all tags") {
       val result = parsers.parse(parser, tagLine)
