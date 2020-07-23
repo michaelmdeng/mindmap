@@ -1,6 +1,6 @@
 package mindmap.effect.generator
 
-import cats.Applicative
+import cats.MonadError
 import cats.data.Chain
 import cats.implicits._
 import java.net.URI
@@ -16,88 +16,130 @@ import mindmap.model.Tag
 import mindmap.model.UnresolvedLink
 import mindmap.model.Zettelkasten
 import mindmap.model.generator.GeneratorAlgebra
+import mindmap.model.parser.markdown.BlockParsers
+import mindmap.model.parser.markdown.BlockQuote
+import mindmap.model.parser.markdown.Header
+import mindmap.model.parser.markdown.LinkParsers
+import mindmap.model.parser.markdown.Paragraph
+import mindmap.model.parser.markdown.TagBlock
+import mindmap.model.parser.markdown.TextParagraph
 
-class MarkdownGenerator[F[_]: Applicative[?[_]]] extends GeneratorAlgebra[F] {
+class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
+    extends GeneratorAlgebra[F] {
   private def logger = Logger.getLogger(this.getClass())
 
-  private def parseTags(content: String): Set[Tag] = {
-    val firstLine = content.takeWhile(_ != '\n')
-    val pattern = "^:[\\w\\-:]+:$".r
-    pattern.findFirstIn(firstLine) match {
-      case Some(s) => s.split(':').filter(_.nonEmpty).map(Tag(_)).toSet
-      case None => Set()
+  private def parseParagraphs(content: String): F[List[Paragraph]] = {
+    val blockParsers = new BlockParsers()
+    blockParsers.parse(blockParsers.blocks, content) match {
+      case blockParsers.Success(bs, _) => blockParsers.mergeBlocks(bs).pure[F]
+      case e: blockParsers.NoSuccess =>
+        (new Exception(e.msg)).raiseError[F, List[Paragraph]]
     }
   }
 
-  private def parseLinks(content: String): Chain[UnresolvedLink] = {
-    val pattern = "\\[([^\\]]+)\\]\\(([^\\)]+)\\)".r
-    val matches = pattern.findAllMatchIn(content)
-
-    val links = matches
-      .filter(_.groupCount >= 2)
-      .map(m => (m.group(1), m.group(2)))
-      .map { case (text, link) => UnresolvedLink(link) }
-      .filter(link => {
-        val uri = Try(new URI(link.to))
-        val validScheme = uri match {
-          case Success(u) => u.getScheme() != "http" && u.getScheme() != "https"
-          case Failure(_) => true
-        }
-        val validExt = uri match {
-          case Success(u) => {
-            val ext = FilenameUtils.getExtension(u.getPath())
-            ext.size == 0 || ext == "html" || ext == "md"
+  private def parseTags(content: String): F[Set[Tag]] =
+    for {
+      paragraphs <- parseParagraphs(content)
+    } yield {
+      paragraphs
+        .map(paragraph => {
+          paragraph match {
+            case TagBlock(ts) => ts
+            case _ => Set()
           }
-          case Failure(_) => true
-        }
+        })
+        .flatten
+        .toSet
+    }
 
-        validScheme && validExt && !link.to.startsWith("#")
-      })
-      .toSeq
+  private def isInternalLink(link: UnresolvedLink): Boolean = {
+    val isValidScheme = (uri: URI) =>
+      uri.getScheme() != "http" && uri.getScheme() != "https"
+    val isValidExt = (uri: URI) => {
+      val ext = FilenameUtils.getExtension(uri.getPath())
+      ext.isEmpty() || ext == "html" || ext == "md"
+    }
 
-    Chain.fromSeq(links)
+    (Try(new URI(link.to)) match {
+      case Success(uri) => isValidScheme(uri) && isValidExt(uri)
+      case Failure(_) => true
+    }) && !link.to.startsWith("#")
   }
 
-  def generate(collection: Collection): F[Zettelkasten] = {
-    val tags = Chain.fromSeq(
-      collection.notes
-        .map(note => parseTags(note.content))
-        .foldLeft(Set[Tag]())(_ ++ _)
-        .toSeq
-    )
-    val noteLinks = collection.notes
-      .map(note => (note, parseLinks(note.content)))
-      .flatMap {
-        case (note, unresolvedLinks) => {
-          unresolvedLinks
-            .map(unresolved =>
-              (unresolved, collection.notes.find(_.title == unresolved.to))
-            )
-            .filter {
-              case (unresolved, resolved) => {
-                if (!resolved.isDefined) {
-                  logger.info(
-                    f"Could not resolve link for ${unresolved} in ${note.title}"
-                  )
-                }
+  private def parseLinks(content: String): F[Chain[UnresolvedLink]] =
+    for {
+      _ <- MonadError[F, Throwable].unit
+      paragraphs <- parseParagraphs(content)
+      linkParsers = new LinkParsers()
+      links <- paragraphs
+        .map(paragraph => {
+          val getParagraphLinks = (s: String) => {
+            linkParsers.parse(linkParsers.links, s) match {
+              case linkParsers.Success(ls, _) => ls.pure[F]
+              case e: linkParsers.NoSuccess =>
+                (new Exception(e.msg)).raiseError[F, List[UnresolvedLink]]
+            }
+          }
+          paragraph match {
+            case TextParagraph(s) => getParagraphLinks(s)
+            case Header(h, _) => getParagraphLinks(h)
+            case BlockQuote(q) => getParagraphLinks(q)
+            case _ => List[UnresolvedLink]().pure[F]
+          }
+        })
+        .sequence
+        .map(_.flatten)
+    } yield {
+      Chain.fromSeq(links.filter(isInternalLink(_)))
+    }
 
-                resolved.isDefined
+  def generate(collection: Collection): F[Zettelkasten] =
+    for {
+      noteTags <- collection.notes
+        .map(note => {
+          MonadError[F, Throwable].tuple2(note.pure[F], parseTags(note.content))
+        })
+        .sequence
+      noteLinks <- collection.notes
+        .map(note => {
+          MonadError[F, Throwable]
+            .tuple2(note.pure[F], parseLinks(note.content))
+            .map {
+              case (note, unresolvedLinks) => {
+                unresolvedLinks
+                  .mapFilter(unresolved => {
+                    val resolvedNote =
+                      collection.notes.find(_.title == unresolved.to)
+                    resolvedNote match {
+                      case Some(resolved) => Some(ResolvedLink(note, resolved))
+                      case None => {
+                        logger.info(
+                          f"Could not resolve link for ${unresolved} in ${note.title}"
+                        )
+                        None
+                      }
+                    }
+                  })
               }
             }
-            .map {
-              case (unresolved, resolved) => ResolvedLink(note, resolved.get)
-            }
-        }
+        })
+        .sequence
+        .map(_.flatten)
+    } yield {
+      val tagLinks = noteTags.flatMap {
+        case (note, tags) =>
+          Chain.fromSeq(tags.map(ResolvedLink(_, note)).toSeq)
       }
+      val tags = Chain.fromSeq(
+        noteTags
+          .map {
+            case (_, tags) => tags
+          }
+          .foldLeft(Set[Tag]())(_ ++ _)
+          .toSeq
+      )
+      val links = noteLinks ++ tagLinks
 
-    val tagLinks: Chain[ResolvedLink] = collection.notes
-      .map(note => {
-        Chain.fromSeq(
-          parseTags(note.content).map(tag => ResolvedLink(tag, note)).toSeq
-        )
-      })
-      .flatten
-    val links = noteLinks ++ tagLinks
-    Zettelkasten(notes = collection.notes, links = links, tags = tags).pure[F]
-  }
+      Zettelkasten(notes = collection.notes, links = links, tags = tags)
+    }
 }
