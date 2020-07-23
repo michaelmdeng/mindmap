@@ -6,7 +6,7 @@ import java.lang.Class
 import org.apache.log4j.Logger
 
 class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
-  private val logger: Logger = Logger.getLogger(this.getClass())
+  private val logger: Logger = Logger.getLogger(clazz)
 
   def info(msg: String): F[Unit] = Effect[F].delay(logger.info(msg))
 

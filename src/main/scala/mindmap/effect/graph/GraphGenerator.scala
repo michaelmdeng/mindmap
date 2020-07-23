@@ -30,44 +30,6 @@ class GraphGenerator[F[+_]: Applicative[?[_]]] extends GraphAlgebra[F] {
         Node(idx.toLong, tag.name, shape = Some("box"), color = Some("red"))
     }
 
-    zettelkasten.links
-      .mapFilter(link => {
-        (link.from match {
-          case (note: Note) => None
-          case (tag: Tag) => Some(tag)
-        })
-      })
-      .groupBy(t => t)
-      .view
-      .mapValues(_.size)
-      .filter {
-        case (_, linkCount) => linkCount == 1
-      }
-      .foreach {
-        case (tag, _) =>
-          logger.warn(f"Tag: ${tag.name} only has one linked note")
-      }
-
-    zettelkasten.notes
-      .filter(note => {
-        val noteLinks = zettelkasten.links
-          .mapFilter(link => {
-            (link.from, link.to) match {
-              case (n1: Note, n2: Note) => Some(Seq(n1, n2))
-              case (n: Note, _) => Some(Seq(n))
-              case (_, n: Note) => Some(Seq(n))
-              case (_, _) => None
-            }
-          })
-          .flatten
-
-        !noteLinks.contains(note)
-      })
-      .map(note => {
-        logger
-          .warn(f"Note: ${note.title} is not linked to any other notes or tags")
-      })
-
     val allEdges = zettelkasten.links.map(link => {
       val fromIdx = link.from match {
         case (note: Note) => noteIndices(note)
