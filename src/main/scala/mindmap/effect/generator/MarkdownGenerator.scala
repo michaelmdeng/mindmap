@@ -108,7 +108,8 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
               case (note, unresolvedLinks) => {
                 unresolvedLinks
                   .mapFilter(unresolved => {
-                    val resolvedNote = collection.notes.find(_.title == unresolved.to)
+                    val resolvedNote =
+                      collection.notes.find(_.title == unresolved.to)
                     resolvedNote match {
                       case Some(resolved) => Some(ResolvedLink(note, resolved))
                       case None => {

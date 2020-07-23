@@ -21,27 +21,3 @@ class LinkParsers extends SharedParsers {
       ls <- repsep(link, regex("[^\\[]*".r))
     } yield (ls)
 }
-
-object LinkParsers {
-  def main(args: Array[String]): Unit = {
-    val content = scala.io.Source
-      .fromFile("/home/mdeng/Dropbox/vimwiki/wiki/backpressure.md")
-      .getLines
-      .mkString("\n")
-
-    val blockParsers = new BlockParsers()
-    val blocks = blockParsers.parse(blockParsers.blocks, content).get
-    println(blocks)
-    val paragraphs = blockParsers.mergeBlocks(blocks)
-    println(paragraphs)
-    val parsers = new LinkParsers()
-    val link = "[foo](bar)"
-    val linkParagraph =
-      "The most popular of these is the [GNU General Public License (GPL)](gpl)."
-
-    // println(parsers.parse(parsers.link, link))
-    // println(parsers.parse(parsers.links, link))
-    val paragraph = paragraphs.last.asInstanceOf[TextParagraph]
-    println(parsers.parse(parsers.links, paragraph.text))
-  }
-}
