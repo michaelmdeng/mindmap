@@ -16,7 +16,6 @@ lazy val commonSettings = Seq(
     "org.typelevel" %% "cats-effect" % "2.1.2"
   ),
   libraryDependencies ++= Seq(
-    "org.scalacheck" %% "scalacheck" % "1.14.1" % "test",
     "org.scalatest" %% "scalatest" % "3.2.0" % "test"
   ),
   addCompilerPlugin(

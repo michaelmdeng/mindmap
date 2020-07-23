@@ -84,33 +84,3 @@ class BlockParsers extends SharedParsers {
     })
   }
 }
-
-object BlockParsers {
-  val test: String =
-    """:probability:data-structures:
-
-# Test Header
-t-digest is a probabilistic data structure that estimates the
-percentiles of a dataset.
-
-> fake block
-t-digest internally works by estimating the points of greatest change in a
-cumulative distribution function and uses [k-means
-clustering](k-means-clustering) to calculate those points.
-"""
-
-  val testDocs = List(test)
-
-  val parsers = new BlockParsers()
-  val tagLineParser = parsers.log(parsers.tags)("tags")
-
-  def main(args: Array[String]): Unit = {
-    testDocs.foreach(document => {
-      val result = parsers.parse(parsers.blocks, document)
-      println(result)
-      println(result.get)
-
-      println(parsers.mergeBlocks(result.get))
-    })
-  }
-}

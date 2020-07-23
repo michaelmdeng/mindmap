@@ -13,7 +13,9 @@ case class CodeBlock(code: String, language: Option[String])
     extends Block
     with Paragraph
 case class BlockQuote(text: String) extends Block with Paragraph
-case class Header(text: String, level: Int) extends Block with Paragraph
+protected case class Header(text: String, level: Int)
+    extends Block
+    with Paragraph
 
 object Header {
   def apply(text: String, level: Int) = new Header(text, min(max(level, 1), 6))
