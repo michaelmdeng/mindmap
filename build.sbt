@@ -11,8 +11,13 @@ lazy val commonSettings = Seq(
     "log4j" % "log4j" % "1.2.17",
     "org.json4s" %% "json4s-native" % "3.7.0-M2",
     "org.scala-graph" %% "graph-core" % "1.13.2",
+    "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
     "org.typelevel" %% "cats-core" % "2.0.0",
     "org.typelevel" %% "cats-effect" % "2.1.2"
+  ),
+  libraryDependencies ++= Seq(
+    "org.scalacheck" %% "scalacheck" % "1.14.1" % "test",
+    "org.scalatest" %% "scalatest" % "3.2.0" % "test"
   ),
   addCompilerPlugin(
     "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
