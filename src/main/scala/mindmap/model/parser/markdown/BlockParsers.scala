@@ -57,9 +57,11 @@ class BlockParsers extends SharedParsers {
   def line: Parser[Line] = regex("[^\n]*".r).map(Line(_))
 
   def blocks: Parser[List[Block]] =
-    rep1sep[Block](
-      tags | codeBlock | header | blockQuote | line,
-      lineBreak
+    phrase(
+      rep1sep[Block](
+        tags | codeBlock | header | blockQuote | line,
+        lineBreak
+      )
     )
 
   def mergeBlocks(blocks: List[Block]): List[Paragraph] = {
@@ -69,15 +71,16 @@ class BlockParsers extends SharedParsers {
         case c: CodeBlock => acc :+ c
         case b: BlockQuote => acc :+ b
         case h: Header => acc :+ h
+        case lb: LineBreak.type => acc :+ lb
         case Line(s) => {
-          if (s.nonEmpty && acc.nonEmpty) {
-            acc.last match {
-              case TextParagraph(p) =>
+          if (s.nonEmpty) {
+            acc.lastOption match {
+              case Some(TextParagraph(p)) =>
                 acc.updated(acc.length - 1, TextParagraph(p + "\n" + s))
               case _ => acc :+ TextParagraph(s)
             }
           } else {
-            acc
+            acc :+ LineBreak
           }
         }
       }
