@@ -43,12 +43,11 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
       paragraphs
         .map(paragraph => {
           paragraph match {
-            case TagBlock(ts) => ts
-            case _ => Set()
+            case TagBlock(ts) => ts.toSet
+            case _ => Set[Tag]()
           }
         })
-        .flatten
-        .toSet
+        .reduce(_ ++ _)
     }
 
   private def isInternalLink(link: UnresolvedLink): Boolean = {
@@ -126,14 +125,14 @@ class MarkdownGenerator[F[_]: MonadError[?[_], Throwable]]
         .map(_.flatten)
     } yield {
       val tagLinks = noteTags.flatMap {
-        case (note, tags) => tags.map(ResolvedLink(_, note)).toSeq
+        case (note, tags) => tags.map(ResolvedLink(_, note))
       }
       val tags = noteTags
         .map {
           case (_, tags) => tags
         }
         .reduce(_ ++ _)
-      val links = noteLinks.toSeq ++ tagLinks.toSeq
+      val links = noteLinks ++ tagLinks
 
       Zettelkasten(notes = collection.notes, links = links, tags = tags)
     }

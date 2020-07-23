@@ -53,9 +53,9 @@ class GraphGenerator[F[+_]: Applicative[?[_]]] extends GraphAlgebra[F] {
         val noteLinks = zettelkasten.links
           .mapFilter(link => {
             (link.from, link.to) match {
-              case (n1: Note, n2: Note) => Some(List(n1, n2))
-              case (n: Note, _) => Some(List(n))
-              case (_, n: Note) => Some(List(n))
+              case (n1: Note, n2: Note) => Some(Seq(n1, n2))
+              case (n: Note, _) => Some(Seq(n))
+              case (_, n: Note) => Some(Seq(n))
               case (_, _) => None
             }
           })
