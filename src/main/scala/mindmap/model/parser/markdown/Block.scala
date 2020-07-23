@@ -22,5 +22,6 @@ object Header {
 }
 
 case class Line(text: String) extends Block
+case object LineBreak extends Block with Paragraph
 
 case class TextParagraph(text: String) extends Paragraph
