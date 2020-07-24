@@ -1,6 +1,7 @@
 package mindmap.effect.configuration
 
-import cats.Id
+import cats.effect.Effect
+import cats.implicits._
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -9,42 +10,32 @@ import scala.io.Source
 
 import mindmap.model.configuration.IgnoreAlgebra
 
-class IgnoreFile extends IgnoreAlgebra[Id] {
+class IgnoreFile[F[_]: Effect[?[_]]] extends IgnoreAlgebra[F] {
   private val wikiDir = "/home/mdeng/Dropbox/vimwiki/wiki"
   private val ignoreFile = ".mindmapignore"
   private val fs = FileSystems.getDefault()
   private val markdownFiles =
     fs.getPathMatcher("glob:/home/mdeng/Dropbox/vimwiki/wiki/**.md")
 
-  val ignores: List[String] =
-    Source.fromFile(f"${wikiDir}/${ignoreFile}").getLines().toList
-
-  private val pathMatchers: List[PathMatcher] = ignores.map(ignore => {
-    fs.getPathMatcher(f"glob:${wikiDir}/${ignore}")
-  })
-
-  def isIgnoreFile(path: Path): Boolean = {
-    val isMarkdown = markdownFiles.matches(path)
-    val isIgnore = pathMatchers.foldLeft(false)((acc, matcher) => {
-      acc || matcher.matches(path)
-    })
-
-    !isMarkdown || isIgnore
+  val ignores: F[Iterator[String]] = Effect[F].delay {
+    Source.fromFile(f"${wikiDir}/${ignoreFile}").getLines()
   }
-}
 
-object Ignores {
-  private val fs = FileSystems.getDefault()
-  private val diaryFiles =
-    fs.getPathMatcher("glob:/home/mdeng/Dropbox/vimwiki/wiki/diary/**")
-  private val markdownFiles =
-    fs.getPathMatcher("glob:/home/mdeng/Dropbox/vimwiki/wiki/**.md")
-  private val interviewFiles = fs.getPathMatcher(
-    "glob:/home/mdeng/Dropbox/vimwiki/wiki/interview-fall-2019/**"
-  )
-
-  def isIgnoreFile(path: Path): Boolean = {
-    markdownFiles.matches(path) && !diaryFiles.matches(path) && !interviewFiles
-      .matches(path)
+  private val pathMatchers: F[Iterator[PathMatcher]] = for {
+    is <- ignores
+  } yield {
+    is.map(ignore => fs.getPathMatcher(f"glob:${wikiDir}/${ignore}"))
   }
+
+  def isIgnoreFile(path: Path): F[Boolean] =
+    for {
+      matchers <- pathMatchers
+    } yield {
+      val isMarkdown = markdownFiles.matches(path)
+      val isIgnore = matchers.foldLeft(false)((acc, matcher) => {
+        acc || matcher.matches(path)
+      })
+
+      !isMarkdown || isIgnore
+    }
 }

@@ -4,6 +4,7 @@ import scala.util.parsing.combinator.RegexParsers
 
 import mindmap.model.Strings._
 import mindmap.model.UnresolvedLink
+import mindmap.model.parser.SharedParsers
 
 class LinkParsers extends SharedParsers {
   def link: Parser[UnresolvedLink] =

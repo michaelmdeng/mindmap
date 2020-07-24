@@ -1,4 +1,4 @@
-package mindmap.model.parser.markdown
+package mindmap.model.parser
 
 import scala.util.parsing.combinator.RegexParsers
 

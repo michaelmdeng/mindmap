@@ -25,11 +25,11 @@ class FileNoteParser[F[_]: ContextShift[?[_]]: Effect[?[_]]](file: File)
 
   def content(): F[String] =
     for {
-      lines <- logger.action(f"reading file: ${file}")(
+      lines <- logger.action(f"read file: ${file}")(
         Effect[F].delay(Source.fromFile(file).getLines())
       )
       c <- ContextShift[F].shift *> logger.action(
-        f"generating content for ${file}"
+        f"generate content for ${file}"
       )(Effect[F].delay(lines.reduce(_ + "\n" + _)))
     } yield (c)
 
@@ -57,7 +57,7 @@ class FileNoteParser[F[_]: ContextShift[?[_]]: Effect[?[_]]](file: File)
   }
 
   def parseNote(): F[Note] =
-    logger.action(f"parsing note: ${file}")(for {
+    logger.action(f"parse note: ${file}")(for {
       c <- content()
       cd <- ContextShift[F].shift *> createDate()
       md <- ContextShift[F].shift *> modifiedDate()

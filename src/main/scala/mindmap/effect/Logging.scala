@@ -6,14 +6,24 @@ import java.lang.Class
 import org.apache.log4j.Logger
 
 class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
-  private val logger: Logger = Logger.getLogger(this.getClass())
+  val logger: Logger = Logger.getLogger(clazz)
 
-  def info(msg: String): F[Unit] = Effect[F].delay(logger.info(msg))
+  private def ignoreFailure(f: F[Unit]): F[Unit] =
+    f.redeem(_ => Effect[F].unit, _ => Effect[F].unit)
+
+  def debug(msg: String): F[Unit] =
+    ignoreFailure(Effect[F].delay(logger.debug(msg)))
+
+  def info(msg: String): F[Unit] =
+    ignoreFailure(Effect[F].delay(logger.info(msg)))
+
+  def warn(msg: String): F[Unit] =
+    ignoreFailure(Effect[F].delay(logger.warn(msg)))
 
   def action[A](msg: String)(act: F[A]): F[A] =
     for {
-      _ <- info(f"Starting ${msg}")
+      _ <- info(f"START ${msg}")
       a <- act
-      _ <- info(f"Ending ${msg}")
+      _ <- info(f"END ${msg}")
     } yield (a)
 }
