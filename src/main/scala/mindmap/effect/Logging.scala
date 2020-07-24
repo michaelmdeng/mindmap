@@ -22,8 +22,8 @@ class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
 
   def action[A](msg: String)(act: F[A]): F[A] =
     for {
-      _ <- ignoreFailure(info(f"START ${msg}"))
+      _ <- info(f"START ${msg}")
       a <- act
-      _ <- ignoreFailure(info(f"END ${msg}"))
+      _ <- info(f"END ${msg}")
     } yield (a)
 }

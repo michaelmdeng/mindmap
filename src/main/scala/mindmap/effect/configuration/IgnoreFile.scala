@@ -17,11 +17,11 @@ class IgnoreFile[F[_]: Effect[?[_]]] extends IgnoreAlgebra[F] {
   private val markdownFiles =
     fs.getPathMatcher("glob:/home/mdeng/Dropbox/vimwiki/wiki/**.md")
 
-  val ignores: F[List[String]] = Effect[F].delay {
-    Source.fromFile(f"${wikiDir}/${ignoreFile}").getLines().toList
+  val ignores: F[Iterator[String]] = Effect[F].delay {
+    Source.fromFile(f"${wikiDir}/${ignoreFile}").getLines()
   }
 
-  private val pathMatchers: F[List[PathMatcher]] = for {
+  private val pathMatchers: F[Iterator[PathMatcher]] = for {
     is <- ignores
   } yield {
     is.map(ignore => fs.getPathMatcher(f"glob:${wikiDir}/${ignore}"))
