@@ -4,7 +4,14 @@ import cats.MonadError
 import cats.Parallel
 import cats.effect.ContextShift
 import cats.effect.Effect
-import cats.implicits._
+import cats.instances.list._
+import cats.syntax.applicative._
+import cats.syntax.applicativeError._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.syntax.functorFilter._
+import cats.syntax.parallel._
+import cats.syntax.traverse._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger

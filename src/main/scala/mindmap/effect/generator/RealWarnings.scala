@@ -1,7 +1,11 @@
 package mindmap.effect.generator
 
 import cats.Monad
-import cats.implicits._
+import cats.instances.list._
+import cats.syntax.applicative._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.syntax.functorFilter._
 
 import mindmap.model.ResolvedLink
 import mindmap.model.generator.ZettelkastenWarningAlgebra

@@ -2,7 +2,9 @@ package mindmap.effect.parser
 
 import cats.effect.ContextShift
 import cats.effect.Effect
-import cats.implicits._
+import cats.syntax.apply._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.LinkOption

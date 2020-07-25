@@ -1,7 +1,7 @@
 package mindmap.effect.configuration
 
 import cats.effect.Effect
-import cats.implicits._
+import cats.syntax.functor._
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path

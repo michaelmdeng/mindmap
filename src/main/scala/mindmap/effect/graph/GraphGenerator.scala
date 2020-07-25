@@ -1,7 +1,10 @@
 package mindmap.effect.graph
 
 import cats.Monad
-import cats.implicits._
+import cats.instances.list._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.syntax.functorFilter._
 import org.apache.log4j.Logger
 
 import mindmap.model.Edge
