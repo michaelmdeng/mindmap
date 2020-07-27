@@ -1,7 +1,7 @@
 package mindmap.effect.configuration
 
 import cats.effect.Effect
-import cats.implicits._
+import cats.syntax.applicative._
 import java.io.File
 
 import mindmap.model.configuration.ConfigurationAlgebra

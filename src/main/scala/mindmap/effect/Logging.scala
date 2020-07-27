@@ -1,7 +1,9 @@
 package mindmap.effect
 
-import cats.implicits._
 import cats.effect.Effect
+import cats.syntax.applicativeError._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import java.lang.Class
 import org.apache.log4j.Logger
 

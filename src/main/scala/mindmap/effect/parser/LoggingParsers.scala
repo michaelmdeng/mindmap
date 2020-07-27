@@ -1,7 +1,9 @@
 package mindmap.effect.parser
 
 import cats.effect.Effect
-import cats.implicits._
+import cats.syntax.applicative._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import scala.util.parsing.input.CharSequenceReader
 import scala.util.parsing.input.Reader
 

@@ -4,7 +4,12 @@ import cats.Parallel
 import cats.effect.ContextShift
 import cats.effect.Effect
 import cats.effect.Resource
-import cats.implicits._
+import cats.instances.list._
+import cats.syntax.applicative._
+import cats.syntax.applicativeError._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import cats.syntax.parallel._
 import java.io.File
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
