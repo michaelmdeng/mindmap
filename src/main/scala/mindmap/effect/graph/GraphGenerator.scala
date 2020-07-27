@@ -44,7 +44,7 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
           for {
             from <- idxByNote.get(n1)
             to <- idxByNote.get(n2)
-          } yield (Edge.tagEdge(from, to))
+          } yield (Edge.noteEdge(from, to))
         }
         case (t: Tag, n: Note) => {
           for {
