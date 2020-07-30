@@ -16,17 +16,17 @@ object Edge {
   case class Smooth(`type`: String)
 
   implicit class EdgeOps(edge: Edge) {
-    def hidden: Edge = Edge.hidden(edge)
-    def shown: Edge = Edge.shown(edge)
+    def hide: Edge = Edge.hide(edge)
+    def show: Edge = Edge.show(edge)
     def toggle(show: Boolean): Edge = Edge.toggle(edge, show)
   }
 
-  def hidden(edge: Edge): Edge =
+  def hide(edge: Edge): Edge =
     edge.copy(physics = Some(false), hidden = Some(true))
-  def shown(edge: Edge): Edge =
+  def show(edge: Edge): Edge =
     edge.copy(physics = Some(true), hidden = Some(false))
-  def toggle(edge: Edge, show: Boolean): Edge =
-    if (show) shown(edge) else hidden(edge)
+  def toggle(edge: Edge, shouldShow: Boolean): Edge =
+    if (shouldShow) show(edge) else hide(edge)
 
   def tagEdge(from: Long, to: Long): Edge = Edge(from, to)
   def noteEdge(from: Long, to: Long): Edge = Edge(from, to, arrows = Some("to"))
