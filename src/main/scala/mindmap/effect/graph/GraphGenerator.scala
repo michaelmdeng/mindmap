@@ -112,7 +112,9 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
       }
     }
 
-  def graph: F[(Iterable[Node], Iterable[Edge])] =
+  def graph: F[
+    (Iterable[Node], Iterable[Edge], Map[String, Long], Map[String, List[Long]])
+  ] =
     for {
       graphConfig <- config.graphConfiguration
       noteByClusteredTag <- clusterNotesByTag()
@@ -225,6 +227,17 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
         })(edge => edge)((e1, e2) => e1)
         .values
 
-      (allNodes, allEdges)
+      val clusterTags = tagByClusterIdx.map {
+        case (clusterIdx, tag) => (clusterIdx.toString(), idxByTag(tag))
+      } ++ tagByClusterIdx.map {
+        case (clusterIdx, tag) => (idxByTag(tag).toString(), clusterIdx)
+      }
+
+      val clusterNotes = notesByClusterIdx.map {
+        case (clusterIdx, notes) =>
+          (clusterIdx.toString, notes.map(idxByNote(_)).toList)
+      }
+
+      (allNodes, allEdges, clusterTags, clusterNotes)
     }
 }
