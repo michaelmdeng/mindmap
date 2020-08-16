@@ -15,8 +15,8 @@ import mindmap.model.Node.NodeOps
 import mindmap.model.Note
 import mindmap.model.Tag
 import mindmap.model.Zettelkasten
-import mindmap.model.graph.GraphAlgebra
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.graph.GraphAlgebra
 
 class GraphGenerator[F[+_]: Monad[?[_]]](
   zettelkasten: Zettelkasten,
