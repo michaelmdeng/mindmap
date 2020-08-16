@@ -15,8 +15,8 @@ import mindmap.model.Node.NodeOps
 import mindmap.model.Note
 import mindmap.model.Tag
 import mindmap.model.Zettelkasten
-import mindmap.model.graph.GraphAlgebra
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.graph.GraphAlgebra
 
 class GraphGenerator[F[+_]: Monad[?[_]]](
   zettelkasten: Zettelkasten,
@@ -54,7 +54,7 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
         }
         case _ => {
           logger.warn(
-            f"Unexpected Zettelkasten link from : ${link.from} to ${link.to}"
+            f"Unexpected Zettelkasten link from: ${link.from} to ${link.to}"
           )
           None
         }
@@ -194,32 +194,46 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
 
       val allEdges = combinedEntityEdges
         .flatMap(edge => {
-          if (tagByIdx.contains(edge.from) && clusterIdxByEntity
-              .contains(tagByIdx(edge.from))) {
-            List(
-              edge.toggle(!clusterEnabled),
-              edge
-                .copy(from = clusterIdxByEntity(tagByIdx(edge.from)))
-                .toggle(clusterEnabled)
-            )
-          } else if (noteByIdx.contains(edge.from) && clusterIdxByEntity
-              .contains(noteByIdx(edge.from))) {
-            List(
-              edge.toggle(!clusterEnabled),
-              edge
-                .copy(from = clusterIdxByEntity(noteByIdx(edge.from)))
-                .toggle(clusterEnabled)
-            )
-          } else if (noteByIdx.contains(edge.to) && clusterIdxByEntity
-              .contains(noteByIdx(edge.to))) {
-            List(
-              edge.toggle(!clusterEnabled),
-              edge
-                .copy(to = clusterIdxByEntity(noteByIdx(edge.to)))
-                .toggle(clusterEnabled)
-            )
-          } else {
-            List(edge)
+          val fromEntity =
+            tagByIdx.get(edge.from).getOrElse(noteByIdx(edge.from))
+          val toEntity =
+            tagByIdx.get(edge.to).getOrElse(noteByIdx(edge.to))
+
+          (
+            clusterIdxByEntity.get(fromEntity),
+            clusterIdxByEntity.get(toEntity)
+          ) match {
+            case (Some(fromCluster), Some(toCluster))
+                if fromCluster != toCluster => {
+              List(
+                edge.toggle(!clusterEnabled),
+                edge
+                  .copy(from = fromCluster, to = toCluster)
+                  .toggle(clusterEnabled),
+                edge
+                  .copy(from = fromCluster)
+                  .toggle(!clusterEnabled),
+                edge
+                  .copy(to = toCluster)
+                  .toggle(!clusterEnabled)
+              )
+            }
+            case (Some(commonCluster), Some(_)) => {
+              List(edge.toggle(!clusterEnabled))
+            }
+            case (Some(fromCluster), None) => {
+              List(
+                edge.toggle(!clusterEnabled),
+                edge.copy(from = fromCluster).toggle(clusterEnabled)
+              )
+            }
+            case (None, Some(toCluster)) => {
+              List(
+                edge.toggle(!clusterEnabled),
+                edge.copy(to = toCluster).toggle(clusterEnabled)
+              )
+            }
+            case (None, None) => List(edge)
           }
         })
         .groupMapReduce(edge => {
