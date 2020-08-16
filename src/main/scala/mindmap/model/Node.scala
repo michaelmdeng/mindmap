@@ -1,5 +1,7 @@
 package mindmap.model
 
+import scala.math.sqrt
+
 case class Node(
   id: Long,
   label: String,
@@ -9,7 +11,7 @@ case class Node(
   group: Option[String] = None,
   physics: Option[Boolean] = None,
   hidden: Option[Boolean] = None,
-  mass: Option[Int] = None
+  mass: Option[Double] = None
 )
 
 object Node {
@@ -49,7 +51,7 @@ object Node {
       shape = Some("ellipse"),
       color = Some("moccasin"),
       title = Some(content),
-      mass = Some(clustered.size + 1)
+      mass = Some(sqrt(clustered.size + 1))
     )
   }
 }
