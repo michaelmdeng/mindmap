@@ -7,16 +7,16 @@ import cats.syntax.functor._
 import cats.syntax.functorFilter._
 import org.apache.log4j.Logger
 
-import mindmap.model.Edge
-import mindmap.model.Edge.EdgeOps
 import mindmap.model.Entity
-import mindmap.model.Node
-import mindmap.model.Node.NodeOps
 import mindmap.model.Note
 import mindmap.model.Tag
 import mindmap.model.Zettelkasten
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.graph.GraphAlgebra
+import mindmap.model.network.NetworkEdge
+import mindmap.model.network.NetworkEdge.NetworkEdgeOps
+import mindmap.model.network.NetworkNode
+import mindmap.model.network.NetworkNode.NetworkNodeOps
 
 class GraphGenerator[F[+_]: Monad[?[_]]](
   zettelkasten: Zettelkasten,
@@ -37,20 +37,20 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
     Map.from(zettelkasten.tags.zip(tagIdxs))
   private val tagByIdx: Map[Long, Tag] = idxByTag.map(_.swap)
 
-  private def entityEdges: List[Edge] = {
+  private def entityEdges: List[NetworkEdge] = {
     zettelkasten.links.mapFilter(link => {
       (link.from, link.to) match {
         case (n1: Note, n2: Note) => {
           for {
             from <- idxByNote.get(n1)
             to <- idxByNote.get(n2)
-          } yield (Edge.noteEdge(from, to))
+          } yield (NetworkEdge.noteEdge(from, to))
         }
         case (t: Tag, n: Note) => {
           for {
             from <- idxByTag.get(t)
             to <- idxByNote.get(n)
-          } yield (Edge.tagEdge(from, to))
+          } yield (NetworkEdge.tagEdge(from, to))
         }
         case _ => {
           logger.warn(
@@ -113,7 +113,12 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
     }
 
   def graph: F[
-    (Iterable[Node], Iterable[Edge], Map[String, Long], Map[String, List[Long]])
+    (
+      Iterable[NetworkNode],
+      Iterable[NetworkEdge],
+      Map[String, Long],
+      Map[String, List[Long]]
+    )
   ] =
     for {
       graphConfig <- config.graphConfiguration
@@ -157,18 +162,20 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
       val allNodes = idxByNote.map {
         case (note, idx) => {
           val isClusterNote = clusterIdxByEntity.contains(note)
-          Node
+          NetworkNode
             .noteNode(idx, note.title, note.content)
             .toggle(!isClusterNote || !clusterEnabled)
         }
       } ++ idxByTag.map {
         case (tag, idx) => {
           val isClusterTag = clusterIdxByEntity.contains(tag)
-          Node.tagNode(idx, tag.name).toggle(!isClusterTag || !clusterEnabled)
+          NetworkNode
+            .tagNode(idx, tag.name)
+            .toggle(!isClusterTag || !clusterEnabled)
         }
       } ++ tagByClusterIdx.map {
         case (clusterIdx, tag) => {
-          Node
+          NetworkNode
             .clusterNode(
               clusterIdx,
               tagByClusterIdx(clusterIdx),
@@ -182,10 +189,10 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
         .groupBy(edge => {
           (Math.min(edge.to, edge.from), Math.max(edge.to, edge.from))
         })
-        .flatMap[Edge] {
+        .flatMap[NetworkEdge] {
           case ((from, to), v) => {
             if (v.size >= 2) {
-              Seq(Edge.doubleEdge(from, to))
+              Seq(NetworkEdge.doubleEdge(from, to))
             } else {
               v
             }

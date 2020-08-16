@@ -1,10 +1,15 @@
 package mindmap.model.graph
 
-import mindmap.model.Node
-import mindmap.model.Edge
+import mindmap.model.network.NetworkNode
+import mindmap.model.network.NetworkEdge
 
 trait GraphAlgebra[F[_]] {
   def graph(): F[
-    (Iterable[Node], Iterable[Edge], Map[String, Long], Map[String, List[Long]])
+    (
+      Iterable[NetworkNode],
+      Iterable[NetworkEdge],
+      Map[String, Long],
+      Map[String, List[Long]]
+    )
   ]
 }
