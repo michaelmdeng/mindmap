@@ -6,6 +6,7 @@ import cats.syntax.applicative._
 import cats.syntax.functorFilter._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphTraversal.AnyConnected
 
 import mindmap.model.Entity
 import mindmap.model.Note
@@ -35,6 +36,46 @@ class RealGraphWarnings[F[+_]: Applicative[?[_]]]
         f"Note: ${note.title} is not linked to any other notes or tags"
       })
 
-    (tagWarnings ++ noteWarnings).pure[F]
+    val tagOverlapWarnings = graph.nodes
+      .filter(node => {
+        node.toOuter match {
+          case tag: Tag => true
+          case _ => false
+        }
+      })
+      .flatMap(node => {
+        val tag = node.toOuter.asInstanceOf[Tag]
+        val connectedTags = node
+          .withMaxDepth(2)
+          .withDirection(AnyConnected)
+          .filter(connectedNode => {
+            connectedNode.toOuter match {
+              case connectedTag: Tag if connectedTag != tag => true
+              case _ => false
+            }
+          })
+
+        val connectedNotes = node.neighbors.filter(neighbor => {
+          neighbor.toOuter match {
+            case note: Note => true
+            case _ => false
+          }
+        })
+
+        connectedTags.toList.mapFilter(connectedTag => {
+          if (connectedNotes
+              .filter(note => !connectedTag.neighbors.contains(note))
+              .isEmpty) {
+            val overlappedTag = connectedTag.toOuter.asInstanceOf[Tag].name
+            Some(
+              f"Tag: ${tag.name} shares all notes with tag: ${overlappedTag}"
+            )
+          } else {
+            None
+          }
+        })
+      })
+
+    (tagWarnings ++ noteWarnings ++ tagOverlapWarnings).pure[F]
   }
 }
