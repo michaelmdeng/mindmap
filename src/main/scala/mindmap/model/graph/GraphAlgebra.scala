@@ -1,10 +1,11 @@
 package mindmap.model.graph
 
-import mindmap.model.Node
-import mindmap.model.Edge
+import scalax.collection.Graph
+import scalax.collection.GraphEdge.DiEdge
+
+import mindmap.model.Entity
 
 trait GraphAlgebra[F[_]] {
-  def graph(): F[
-    (Iterable[Node], Iterable[Edge], Map[String, Long], Map[String, List[Long]])
-  ]
+  def graph(): F[Graph[Entity, DiEdge]]
+  def network(graph: Graph[Entity, DiEdge]): F[Network]
 }
