@@ -1,4 +1,4 @@
-package mindmap.model.network
+package mindmap.model.graph
 
 import scala.math.sqrt
 
