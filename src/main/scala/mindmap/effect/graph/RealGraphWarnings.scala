@@ -1,8 +1,10 @@
 package mindmap.effect.graph
 
-import cats.Applicative
+import cats.Monad
 import cats.instances.list._
 import cats.syntax.applicative._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import cats.syntax.functorFilter._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
@@ -13,10 +15,9 @@ import mindmap.model.Note
 import mindmap.model.Tag
 import mindmap.model.graph.GraphWarningAlgebra
 
-class RealGraphWarnings[F[+_]: Applicative[?[_]]]
-    extends GraphWarningAlgebra[F] {
-  def warnings(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
-    val tagWarnings = graph.nodes.toList
+class RealGraphWarnings[F[+_]: Monad[?[_]]] extends GraphWarningAlgebra[F] {
+  private def singleTags(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
+    graph.nodes.toList
       .mapFilter(node => {
         node.toOuter match {
           case tag: Tag if node.degree <= 1 => Some(tag)
@@ -24,8 +25,11 @@ class RealGraphWarnings[F[+_]: Applicative[?[_]]]
         }
       })
       .map(tag => f"Tag: ${tag.name} only has one linked note")
+      .pure[F]
+  }
 
-    val noteWarnings = graph.nodes.toList
+  private def singleNotes(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
+    graph.nodes.toList
       .mapFilter(node => {
         node.toOuter match {
           case note: Note if node.degree == 0 => Some(note)
@@ -35,8 +39,13 @@ class RealGraphWarnings[F[+_]: Applicative[?[_]]]
       .map(note => {
         f"Note: ${note.title} is not linked to any other notes or tags"
       })
+      .pure[F]
+  }
 
-    val tagOverlapWarnings = graph.nodes
+  private def overlappingTags(
+    graph: Graph[Entity, DiEdge]
+  ): F[Iterable[String]] = {
+    graph.nodes
       .filter(node => {
         node.toOuter match {
           case tag: Tag => true
@@ -75,7 +84,15 @@ class RealGraphWarnings[F[+_]: Applicative[?[_]]]
           }
         })
       })
-
-    (tagWarnings ++ noteWarnings ++ tagOverlapWarnings).pure[F]
+      .pure[F]
   }
+
+  def warnings(graph: Graph[Entity, DiEdge]): F[Iterable[String]] =
+    for {
+      tagWarnings <- singleTags(graph)
+      noteWarnings <- singleNotes(graph)
+      tagOverlapWarnings <- overlappingTags(graph)
+    } yield {
+      tagWarnings ++ noteWarnings ++ tagOverlapWarnings
+    }
 }
