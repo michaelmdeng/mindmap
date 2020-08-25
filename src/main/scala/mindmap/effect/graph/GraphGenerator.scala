@@ -6,7 +6,6 @@ import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.functorFilter._
-import org.apache.log4j.Logger
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
@@ -28,8 +27,6 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
   zettelkasten: Zettelkasten,
   config: ConfigurationAlgebra[F]
 ) extends GraphAlgebra[F] {
-  private def logger = Logger.getLogger(this.getClass())
-
   def graph(): F[Graph[Entity, DiEdge]] = {
     Graph
       .from(

@@ -8,7 +8,7 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-feature", "-deprecation"),
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % "2.6",
-    "log4j" % "log4j" % "1.2.17",
+    "org.apache.logging.log4j" % "log4j-core" % "2.13.3",
     "org.json4s" %% "json4s-native" % "3.7.0-M2",
     "org.scala-graph" %% "graph-core" % "1.13.2",
     "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",

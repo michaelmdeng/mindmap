@@ -13,13 +13,12 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.util.TimeZone
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
 import scala.concurrent.ExecutionContext
 import scala.io.Source
 
+import mindmap.effect.Logging
 import mindmap.model.Note
 import mindmap.model.parser.NoteParserAlgebra
-import mindmap.effect.Logging
 
 class FileNoteParser[F[_]: ContextShift[?[_]]: Effect[?[_]]](file: File)
     extends NoteParserAlgebra[F] {

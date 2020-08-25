@@ -4,11 +4,11 @@ import cats.effect.Effect
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import java.lang.Class
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
-  val logger: Logger = Logger.getLogger(clazz)
+  val logger: Logger = LogManager.getLogger(clazz)
 
   private def ignoreFailure(f: F[Unit]): F[Unit] =
     f.redeem(_ => Effect[F].unit, _ => Effect[F].unit)
@@ -28,4 +28,9 @@ class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
       a <- act
       _ <- info(f"END ${msg}")
     } yield (a)
+}
+
+object Logging {
+  def apply[F[_]: Effect[?[_]]](clazz: Class[_]): Logging[F] =
+    new Logging(clazz)
 }
