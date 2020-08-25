@@ -15,7 +15,6 @@ import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import org.apache.log4j.Logger
 import scala.jdk.StreamConverters._
 
 import mindmap.model.configuration.ConfigurationAlgebra
@@ -24,8 +23,8 @@ import mindmap.model.Collection
 import mindmap.model.Note
 
 object VimwikiCollection {
-  private val logger: Logger = Logger.getLogger(this.getClass())
   private val MAX_DEPTH: Int = 100
+
   private def getFiles[F[_]: Effect[?[_]]](
     config: ConfigurationAlgebra[F]
   ): F[List[File]] = {

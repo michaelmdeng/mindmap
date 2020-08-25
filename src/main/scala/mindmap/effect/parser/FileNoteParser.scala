@@ -13,7 +13,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.util.TimeZone
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
 import scala.concurrent.ExecutionContext
 import scala.io.Source
 

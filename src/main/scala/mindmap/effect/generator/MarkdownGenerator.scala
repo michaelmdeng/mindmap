@@ -14,7 +14,6 @@ import cats.syntax.parallel._
 import cats.syntax.traverse._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
-import org.apache.log4j.Logger
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
