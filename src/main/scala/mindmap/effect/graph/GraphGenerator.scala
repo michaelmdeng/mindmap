@@ -15,8 +15,9 @@ import mindmap.model.Note
 import mindmap.model.Tag
 import mindmap.model.Zettelkasten
 import mindmap.model.configuration.ConfigurationAlgebra
-import mindmap.model.graph.GraphAlgebra
 import mindmap.model.graph.Cluster
+import mindmap.model.graph.GraphAlgebra
+import mindmap.model.graph.GraphNode
 import mindmap.model.graph.Network
 import mindmap.model.graph.NetworkEdge
 import mindmap.model.graph.NetworkEdge.NetworkEdgeOps
@@ -45,47 +46,27 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
       graphConfig <- config.graphConfiguration
     } yield {
       val clusterByTagNode = graph.nodes.toList
-        .mapFilter(node => {
-          node.toOuter match {
-            case _: Tag => Some((node, node.neighbors.size))
-            case _ => None
-          }
-        })
+        .mapFilter(node => GraphNode.tagNode(node))
+        .map(tagNode => (tagNode, tagNode.node.neighbors.size))
         .toMap
 
       val clusters = clusterByTagNode.toList.mapFilter {
         case (tagNode, size) => {
-          val clusterNotes = tagNode.neighbors
-            .filter(neighborNode => {
-              neighborNode.toOuter match {
-                case _: Note => {
-                  neighborNode.neighbors
-                    .filter(noteNeighborNode => {
-                      clusterByTagNode.contains(noteNeighborNode)
-                    })
-                    .maxByOption(neighborTagNode => {
-                      clusterByTagNode(neighborTagNode)
-                    }) match {
-                    case Some(t) => tagNode == t
-                    case _ => false
-                  }
-                }
-                case _ => false
-              }
-            })
-            .toList
-            .mapFilter(node => {
-              node.toOuter match {
-                case note: Note => Some(note)
-                case _ => None
-              }
+          val clusterNotes = tagNode.node.neighbors.toList
+            .mapFilter(neighborNode => {
+              for {
+                neighborNoteNode <- GraphNode.noteNode(neighborNode)
+                isCluster <- neighborNoteNode.node.neighbors.toList
+                  .mapFilter(noteNeighbor => GraphNode.tagNode(noteNeighbor))
+                  .maxByOption(neighborTagNode => {
+                    clusterByTagNode(neighborTagNode)
+                  })
+                  .filter(_ == tagNode)
+              } yield (neighborNoteNode.note)
             })
 
           if (clusterNotes.size >= graphConfig.clusterThreshold) {
-            tagNode.toOuter match {
-              case tag: Tag => Some(Cluster(tag, clusterNotes))
-              case _ => None
-            }
+            Some(Cluster(tagNode.tag, clusterNotes))
           } else {
             None
           }
