@@ -16,9 +16,9 @@ import org.apache.commons.io.FilenameUtils
 import scala.concurrent.ExecutionContext
 import scala.io.Source
 
+import mindmap.effect.Logging
 import mindmap.model.Note
 import mindmap.model.parser.NoteParserAlgebra
-import mindmap.effect.Logging
 
 class FileNoteParser[F[_]: ContextShift[?[_]]: Effect[?[_]]](file: File)
     extends NoteParserAlgebra[F] {

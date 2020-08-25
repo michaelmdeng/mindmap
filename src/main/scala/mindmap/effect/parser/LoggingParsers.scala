@@ -11,25 +11,25 @@ import mindmap.effect.Logging
 import mindmap.model.parser.SharedParsers
 
 trait LoggingParsers extends SharedParsers {
-  def parseAndLog[F[_]: Effect[?[_]], T](
+  def parseAndLog[F[_]: Effect[?[_]]: Logging[?[_]], T](
     p: Parser[T],
     in: CharSequence,
     name: String
   ): F[ParseResult[T]] = parseAndLog(p, new CharSequenceReader(in), name)
 
-  def parseAndLog[F[_]: Effect[?[_]], T](
+  def parseAndLog[F[_]: Effect[?[_]]: Logging[?[_]], T](
     p: Parser[T],
     in: Reader[Char],
     name: String
   ): F[ParseResult[T]] = {
-    val logger = new Logging(this.getClass())
-
     for {
-      _ <- logger.debug(f"Trying parser: ${name} at ${in}")
+      _ <- Logging(this.getClass()).debug(f"Trying parser: ${name} at ${in}")
       result <- parse(p, in).pure[F]
       _ <- result match {
-        case Success(r, _) =>
-          logger.debug(f"Parsed result for parser: ${name} --> ${r}")
+        case Success(r, _) => {
+          Logging(this.getClass())
+            .debug(f"Parsed result for parser: ${name} --> ${r}")
+        }
         case _: NoSuccess => Effect[F].unit
       }
     } yield (result)

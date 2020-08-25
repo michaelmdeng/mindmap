@@ -29,3 +29,8 @@ class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
       _ <- info(f"END ${msg}")
     } yield (a)
 }
+
+object Logging {
+  def apply[F[_]: Effect[?[_]]](clazz: Class[_]): Logging[F] =
+    new Logging(clazz)
+}

@@ -36,9 +36,9 @@ import mindmap.model.parser.markdown.TextParagraph
 
 class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
     extends GeneratorAlgebra[F] {
-  private def logger = new Logging(this.getClass())
+  private implicit val logger = new Logging(this.getClass())
 
-  private val blockParsers = new BlockParsers with LoggingParsers {}
+  private val blockParsers = new BlockParsers() with LoggingParsers {}
   private val linkParsers = new LinkParsers() with LoggingParsers {}
 
   private def parseParagraphs(content: String): F[List[Paragraph]] =
