@@ -13,16 +13,19 @@ import scalax.collection.GraphTraversal.AnyConnected
 import mindmap.model.Entity
 import mindmap.model.Note
 import mindmap.model.Tag
+import mindmap.model.graph.GraphNode
 import mindmap.model.graph.GraphWarningAlgebra
 
 class RealGraphWarnings[F[+_]: Monad[?[_]]] extends GraphWarningAlgebra[F] {
   private def singleTags(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
     graph.nodes.toList
       .mapFilter(node => {
-        node.toOuter match {
-          case tag: Tag if node.degree <= 1 => Some(tag)
-          case _ => None
-        }
+        for {
+          singleTag <- GraphNode
+            .tagNode(node)
+            .filter(_.node.degree <= 1)
+            .map(_.tag)
+        } yield (singleTag)
       })
       .map(tag => f"Tag: ${tag.name} only has one linked note")
       .pure[F]
@@ -31,10 +34,12 @@ class RealGraphWarnings[F[+_]: Monad[?[_]]] extends GraphWarningAlgebra[F] {
   private def singleNotes(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
     graph.nodes.toList
       .mapFilter(node => {
-        node.toOuter match {
-          case note: Note if node.degree == 0 => Some(note)
-          case _ => None
-        }
+        for {
+          singleNote <- GraphNode
+            .noteNode(node)
+            .filter(_.node.degree == 0)
+            .map(_.note)
+        } yield (singleNote)
       })
       .map(note => {
         f"Note: ${note.title} is not linked to any other notes or tags"
