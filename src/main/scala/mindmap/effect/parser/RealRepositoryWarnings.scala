@@ -19,10 +19,11 @@ class RealRepositoryWarnings[F[+_]: Applicative[?[_]]]
           unresolvedLinks
             .mapFilter(unresolved => {
               notes.find(_.title == unresolved.to) match {
-                case None =>
+                case None => {
                   Some(
                     f"Could not resolve link for ${unresolved} in note: ${note.title}"
                   )
+                }
                 case _ => None
               }
             })

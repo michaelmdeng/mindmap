@@ -10,9 +10,9 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
-import cats.syntax.traverse._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
+import org.apache.logging.log4j.Level
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -20,9 +20,9 @@ import scala.util.Try
 import mindmap.effect.Logging
 import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
+import mindmap.model.Repository
 import mindmap.model.Tag
 import mindmap.model.UnresolvedLink
-import mindmap.model.Repository
 import mindmap.model.parser.RepositoryParserAlgebra
 import mindmap.model.parser.markdown.BlockParsers
 import mindmap.model.parser.markdown.BlockQuote
@@ -99,8 +99,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
             case _ => List[UnresolvedLink]().pure[F]
           }
         })
-        .sequence
-        .map(_.flatten)
+        .parFlatSequence
     } yield (links.filter(isInternalLink(_)))
   }
 
@@ -110,7 +109,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
         .map(note => {
           MonadError[F, Throwable].tuple2(
             note.pure[F],
-            logger.action(f"parse tags for note: ${note.title}")(
+            logger.action(f"parse tags for note: ${note.title}", Level.DEBUG)(
               parseTags(note.content)
             )
           )
@@ -121,9 +120,10 @@ class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
           MonadError[F, Throwable]
             .tuple2(
               note.pure[F],
-              logger.action(f"parse links for note: ${note.title}")(
-                parseLinks(note.content)
-              )
+              logger
+                .action(f"parse links for note: ${note.title}", Level.DEBUG)(
+                  parseLinks(note.content)
+                )
             )
         })
         .parSequence

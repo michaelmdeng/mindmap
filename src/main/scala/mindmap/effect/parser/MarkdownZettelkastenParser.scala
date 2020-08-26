@@ -1,21 +1,18 @@
 package mindmap.effect.parser
 
-import cats.effect.Effect
+import cats.Applicative
 import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.functorFilter._
 
-import mindmap.effect.Logging
 import mindmap.model.Repository
 import mindmap.model.ResolvedLink
 import mindmap.model.Tag
 import mindmap.model.Zettelkasten
 import mindmap.model.parser.ZettelkastenParserAlgebra
 
-class MarkdownZettelkastenParser[F[_]: Effect[?[_]]]
+class MarkdownZettelkastenParser[F[_]: Applicative[?[_]]]
     extends ZettelkastenParserAlgebra[F] {
-  private implicit val logger = new Logging(this.getClass())
-
   def parseZettelkasten(repository: Repository): F[Zettelkasten] = {
     val notes = repository.noteTags.keySet.toList
 

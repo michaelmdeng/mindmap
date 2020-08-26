@@ -13,8 +13,10 @@ import cats.syntax.parallel._
 import java.io.File
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
+import org.apache.logging.log4j.Level
 import scala.jdk.StreamConverters._
 
+import mindmap.effect.Logging
 import mindmap.effect.parser.FileNoteParser
 import mindmap.model.Collection
 import mindmap.model.configuration.ConfigurationAlgebra
@@ -24,6 +26,7 @@ class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
   ?[_]
 ]] extends CollectionParserAlgebra[F] {
   private val MAX_DEPTH: Int = 100
+  private val logger: Logging[F] = new Logging(this.getClass())
 
   private def getFiles(config: ConfigurationAlgebra[F]): F[List[File]] = {
     for {
@@ -51,7 +54,7 @@ class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
 
   def parseCollection(config: ConfigurationAlgebra[F]): F[Collection] =
     for {
-      files <- getFiles(config)
+      files <- logger.action("find files", Level.DEBUG)(getFiles(config))
       notes <- files
         .map(file => {
           new FileNoteParser(file)
