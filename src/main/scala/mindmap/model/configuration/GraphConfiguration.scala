@@ -1,8 +1,18 @@
 package mindmap.model.configuration
 
-case class GraphConfiguration(clusterEnabled: Boolean, clusterThreshold: Int)
+import mindmap.model.Tag
+
+case class GraphConfiguration(
+  clusterEnabled: Boolean,
+  clusterThreshold: Int,
+  excludeClusterTags: Set[Tag]
+)
 
 object GraphConfiguration {
   val DEFAULT: GraphConfiguration =
-    GraphConfiguration(clusterEnabled = true, clusterThreshold = 7)
+    GraphConfiguration(
+      clusterEnabled = true,
+      clusterThreshold = 7,
+      excludeClusterTags = Set()
+    )
 }

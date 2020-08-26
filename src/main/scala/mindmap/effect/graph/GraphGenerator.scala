@@ -23,9 +23,8 @@ import mindmap.model.graph.NetworkEdge.NetworkEdgeOps
 import mindmap.model.graph.NetworkNode
 import mindmap.model.graph.NetworkNode.NetworkNodeOps
 
-class GraphGenerator[F[+_]: Monad[?[_]]](
-  zettelkasten: Zettelkasten,
-  config: ConfigurationAlgebra[F]
+class GraphGenerator[F[+_]: Monad[?[_]]: ConfigurationAlgebra[?[_]]](
+  zettelkasten: Zettelkasten
 ) extends GraphAlgebra[F] {
   def graph(): F[Graph[Entity, DiEdge]] = {
     Graph
@@ -40,10 +39,13 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
     (Map[Either[Entity, Cluster], Long], Map[Either[Entity, Cluster], Long])
   ] =
     for {
-      graphConfig <- config.graphConfiguration
+      graphConfig <- ConfigurationAlgebra[F].graphConfiguration
     } yield {
       val clusterByTagNode = graph.nodes.toList
         .mapFilter(node => GraphNode.tagNode(node))
+        .filter(tagNode =>
+          !graphConfig.excludeClusterTags.contains(tagNode.tag)
+        )
         .map(tagNode => (tagNode, tagNode.node.neighbors.size))
         .toMap
 
@@ -56,7 +58,7 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
                 isCluster <- neighborNoteNode.node.neighbors.toList
                   .mapFilter(noteNeighbor => GraphNode.tagNode(noteNeighbor))
                   .maxByOption(neighborTagNode => {
-                    clusterByTagNode(neighborTagNode)
+                    clusterByTagNode.get(neighborTagNode).getOrElse(-1)
                   })
                   .filter(_ == tagNode)
               } yield (neighborNoteNode.note)
@@ -89,7 +91,7 @@ class GraphGenerator[F[+_]: Monad[?[_]]](
 
   def network(graph: Graph[Entity, DiEdge]): F[Network] =
     for {
-      graphConfig <- config.graphConfiguration
+      graphConfig <- ConfigurationAlgebra[F].graphConfiguration
       t <- cluster(graph)
       idxByMember = t._1
       clusterIdxByMember = t._2
