@@ -1,4 +1,4 @@
-package mindmap.effect.generator
+package mindmap.effect.parser
 
 import cats.MonadError
 import cats.Parallel
@@ -9,7 +9,6 @@ import cats.syntax.applicative._
 import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
-import cats.syntax.functorFilter._
 import cats.syntax.parallel._
 import cats.syntax.traverse._
 import java.net.URI
@@ -21,11 +20,10 @@ import scala.util.Try
 import mindmap.effect.Logging
 import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
-import mindmap.model.ResolvedLink
 import mindmap.model.Tag
 import mindmap.model.UnresolvedLink
-import mindmap.model.Zettelkasten
-import mindmap.model.generator.GeneratorAlgebra
+import mindmap.model.Repository
+import mindmap.model.parser.RepositoryParserAlgebra
 import mindmap.model.parser.markdown.BlockParsers
 import mindmap.model.parser.markdown.BlockQuote
 import mindmap.model.parser.markdown.Header
@@ -34,8 +32,9 @@ import mindmap.model.parser.markdown.Paragraph
 import mindmap.model.parser.markdown.TagBlock
 import mindmap.model.parser.markdown.TextParagraph
 
-class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
-    extends GeneratorAlgebra[F] {
+class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
+  ?[_]
+]] extends RepositoryParserAlgebra[F] {
   private implicit val logger = new Logging(this.getClass())
 
   private val blockParsers = new BlockParsers() with LoggingParsers {}
@@ -73,10 +72,9 @@ class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
       ext.isEmpty() || ext == "html" || ext == "md"
     }
 
-    (Try(new URI(link.to)) match {
-      case Success(uri) => isValidScheme(uri) && isValidExt(uri)
-      case Failure(_) => true
-    }) && !link.to.startsWith("#")
+    (Try(new URI(link.to)))
+      .map(uri => isValidScheme(uri) && isValidExt(uri))
+      .getOrElse(true) && !link.to.startsWith("#")
   }
 
   private def parseParagraphLinks(paragraph: String): F[List[UnresolvedLink]] =
@@ -91,7 +89,6 @@ class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
 
   private def parseLinks(content: String): F[List[UnresolvedLink]] = {
     for {
-      _ <- MonadError[F, Throwable].unit
       paragraphs <- parseParagraphs(content)
       links <- paragraphs
         .map(paragraph => {
@@ -107,7 +104,7 @@ class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
     } yield (links.filter(isInternalLink(_)))
   }
 
-  def generate(collection: Collection): F[Zettelkasten] =
+  def parseRepository(collection: Collection): F[Repository] =
     for {
       noteTags <- collection.notes
         .map(note => {
@@ -128,37 +125,9 @@ class MarkdownGenerator[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]]
                 parseLinks(note.content)
               )
             )
-            .map {
-              case (note, unresolvedLinks) => {
-                unresolvedLinks
-                  .mapFilter(unresolved => {
-                    val resolvedNote =
-                      collection.notes.find(_.title == unresolved.to)
-                    resolvedNote match {
-                      case Some(resolved) => Some(ResolvedLink(note, resolved))
-                      case None => {
-                        logger.logger.info(
-                          f"Could not resolve link for ${unresolved} in ${note.title}"
-                        )
-                        None
-                      }
-                    }
-                  })
-              }
-            }
         })
-        .parFlatSequence
+        .parSequence
     } yield {
-      val tagLinks = noteTags.flatMap {
-        case (note, tags) => tags.map(ResolvedLink(_, note))
-      }
-      val tags = noteTags
-        .map {
-          case (_, tags) => tags
-        }
-        .reduce(_ ++ _)
-      val links = noteLinks ++ tagLinks
-
-      Zettelkasten(notes = collection.notes, links = links, tags = tags)
+      Repository(noteTags = noteTags.toMap, noteLinks = noteLinks.toMap)
     }
 }
