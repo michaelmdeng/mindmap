@@ -13,21 +13,22 @@ import cats.syntax.parallel._
 import java.io.File
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
+import org.apache.logging.log4j.Level
 import scala.jdk.StreamConverters._
 
-import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.effect.Logging
 import mindmap.effect.parser.FileNoteParser
 import mindmap.model.Collection
-import mindmap.model.Note
+import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.parser.CollectionParserAlgebra
 
-object VimwikiCollection {
+class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
+  ?[_]
+]] extends CollectionParserAlgebra[F] {
   private val MAX_DEPTH: Int = 100
+  private val logger: Logging[F] = new Logging(this.getClass())
 
-  private def getFiles[F[_]: Effect[?[_]]](
-    config: ConfigurationAlgebra[F]
-  ): F[List[File]] = {
+  private def getFiles(config: ConfigurationAlgebra[F]): F[List[File]] = {
     for {
       dir <- config.rootDir
       files <- Resource
@@ -51,11 +52,9 @@ object VimwikiCollection {
     } yield (files)
   }
 
-  def apply[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[?[_]]](
-    config: ConfigurationAlgebra[F]
-  ): F[Collection] =
+  def parseCollection(config: ConfigurationAlgebra[F]): F[Collection] =
     for {
-      files <- getFiles(config)
+      files <- logger.action("find files", Level.DEBUG)(getFiles(config))
       notes <- files
         .map(file => {
           new FileNoteParser(file)
