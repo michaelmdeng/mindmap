@@ -18,6 +18,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.0" % "test"
   ),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(
     "org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full
   )

@@ -24,22 +24,23 @@ import mindmap.model.parser.CollectionParserAlgebra
 
 class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
   ?[_]
-]] extends CollectionParserAlgebra[F] {
+]: ConfigurationAlgebra[?[_]]]
+    extends CollectionParserAlgebra[F] {
   private val MAX_DEPTH: Int = 100
   private val logger: Logging[F] = new Logging(this.getClass())
 
-  private def getFiles(config: ConfigurationAlgebra[F]): F[List[File]] = {
+  private def getFiles(): F[List[File]] = {
     for {
-      dir <- config.rootDir
+      config <- ConfigurationAlgebra[F].collectionConfiguration
       files <- Resource
         .fromAutoCloseable(Effect[F].delay {
           Files
             .find(
-              dir.toPath(),
-              MAX_DEPTH,
+              config.root.toPath(),
+              config.depth,
               (path, attr) => {
                 !Effect[F]
-                  .toIO(config.isIgnoreFile(path).attempt)
+                  .toIO(ConfigurationAlgebra[F].isIgnoreFile(path).attempt)
                   .unsafeRunSync()
                   .getOrElse(false)
               },
@@ -54,7 +55,7 @@ class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
 
   def parseCollection(config: ConfigurationAlgebra[F]): F[Collection] =
     for {
-      files <- logger.action("find files", Level.DEBUG)(getFiles(config))
+      files <- logger.action("find files")(getFiles())
       notes <- files
         .map(file => {
           new FileNoteParser(file)

@@ -23,6 +23,7 @@ import mindmap.model.Collection
 import mindmap.model.Repository
 import mindmap.model.Tag
 import mindmap.model.UnresolvedLink
+import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.parser.RepositoryParserAlgebra
 import mindmap.model.parser.markdown.BlockParsers
 import mindmap.model.parser.markdown.BlockQuote
@@ -34,7 +35,8 @@ import mindmap.model.parser.markdown.TextParagraph
 
 class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
   ?[_]
-]] extends RepositoryParserAlgebra[F] {
+]: ConfigurationAlgebra[?[_]]]
+    extends RepositoryParserAlgebra[F] {
   private implicit val logger = new Logging(this.getClass())
 
   private val blockParsers = new BlockParsers() with LoggingParsers {}
@@ -127,7 +129,17 @@ class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
             )
         })
         .parSequence
+      config <- ConfigurationAlgebra[F].repositoryConfiguration
     } yield {
-      Repository(noteTags = noteTags.toMap, noteLinks = noteLinks.toMap)
+      Repository(
+        noteTags = noteTags.toMap.map {
+          case (note, tags) =>
+            (
+              note,
+              tags.filter(tag => !config.excludeTags.contains(tag))
+            )
+        },
+        noteLinks = noteLinks.toMap
+      )
     }
 }
