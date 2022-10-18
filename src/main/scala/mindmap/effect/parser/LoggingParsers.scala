@@ -11,13 +11,13 @@ import mindmap.effect.Logging
 import mindmap.model.parser.SharedParsers
 
 trait LoggingParsers extends SharedParsers {
-  def parseAndLog[F[_]: Effect[?[_]]: Logging[?[_]], T](
+  def parseAndLog[F[_]: Effect[*[_]]: Logging[*[_]], T](
     p: Parser[T],
     in: CharSequence,
     name: String
   ): F[ParseResult[T]] = parseAndLog(p, new CharSequenceReader(in), name)
 
-  def parseAndLog[F[_]: Effect[?[_]]: Logging[?[_]], T](
+  def parseAndLog[F[_]: Effect[*[_]]: Logging[*[_]], T](
     p: Parser[T],
     in: Reader[Char],
     name: String

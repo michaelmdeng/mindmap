@@ -21,7 +21,7 @@ import mindmap.effect.Logging
 import mindmap.model.Note
 import mindmap.model.parser.NoteParserAlgebra
 
-class FileNoteParser[F[_]: ContextShift[?[_]]: Effect[?[_]]](file: File)
+class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]](file: File)
     extends NoteParserAlgebra[F] {
   private val logger: Logging[F] = new Logging(this.getClass())
 

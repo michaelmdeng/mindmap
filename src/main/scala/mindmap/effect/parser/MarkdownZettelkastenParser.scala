@@ -11,7 +11,7 @@ import mindmap.model.Tag
 import mindmap.model.Zettelkasten
 import mindmap.model.parser.ZettelkastenParserAlgebra
 
-class MarkdownZettelkastenParser[F[_]: Applicative[?[_]]]
+class MarkdownZettelkastenParser[F[_]: Applicative[*[_]]]
     extends ZettelkastenParserAlgebra[F] {
   def parseZettelkasten(repository: Repository): F[Zettelkasten] = {
     val notes = repository.noteTags.keySet.toList

@@ -33,9 +33,9 @@ import mindmap.model.parser.markdown.Paragraph
 import mindmap.model.parser.markdown.TagBlock
 import mindmap.model.parser.markdown.TextParagraph
 
-class MarkdownRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
-  ?[_]
-]: ConfigurationAlgebra[?[_]]]
+class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
+  *[_]
+]: ConfigurationAlgebra[*[_]]]
     extends RepositoryParserAlgebra[F] {
   private implicit val logger = new Logging(this.getClass())
 
