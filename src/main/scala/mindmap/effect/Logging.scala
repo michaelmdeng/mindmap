@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
+class Logging[F[_]: Effect[*[_]]](clazz: Class[_]) {
   val logger: Logger = LogManager.getLogger(clazz)
 
   private def ignoreFailure(f: F[Unit]): F[Unit] =
@@ -33,6 +33,6 @@ class Logging[F[_]: Effect[?[_]]](clazz: Class[_]) {
 }
 
 object Logging {
-  def apply[F[_]: Effect[?[_]]](clazz: Class[_]): Logging[F] =
+  def apply[F[_]: Effect[*[_]]](clazz: Class[_]): Logging[F] =
     new Logging(clazz)
 }

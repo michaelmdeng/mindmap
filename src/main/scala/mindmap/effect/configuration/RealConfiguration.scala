@@ -19,7 +19,7 @@ object RealConfiguration {
   private val IGNORE_FILE = ".mindmapignore"
   private val DEFAULT_FS = FileSystems.getDefault()
 
-  def apply[F[_]: Effect[?[_]]](root: String): ConfigurationAlgebra[F] =
+  def apply[F[_]: Effect[*[_]]](root: String): ConfigurationAlgebra[F] =
     new ConfigurationAlgebra[F] {
       private val logger: Logging[F] = new Logging(this.getClass())
       private val markdownFiles: PathMatcher =

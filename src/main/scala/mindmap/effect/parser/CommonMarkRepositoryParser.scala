@@ -32,9 +32,9 @@ import mindmap.model.parser.RepositoryParserAlgebra
 import mindmap.model.parser.markdown.BlockParsers
 import mindmap.model.parser.markdown.TagBlock
 
-class CommonMarkRepositoryParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
-  ?[_]
-]: ConfigurationAlgebra[?[_]]]
+class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
+  *[_]
+]: ConfigurationAlgebra[*[_]]]
     extends RepositoryParserAlgebra[F] {
   private class LinkCollector extends AbstractVisitor {
     var links: List[UnresolvedLink] = List()

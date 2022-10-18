@@ -23,7 +23,7 @@ import mindmap.model.graph.NetworkEdge.NetworkEdgeOps
 import mindmap.model.graph.NetworkNode
 import mindmap.model.graph.NetworkNode.NetworkNodeOps
 
-class GraphGenerator[F[+_]: Monad[?[_]]: ConfigurationAlgebra[?[_]]](
+class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
   zettelkasten: Zettelkasten
 ) extends GraphAlgebra[F] {
   def graph(): F[Graph[Entity, DiEdge]] = {

@@ -22,9 +22,9 @@ import mindmap.model.Collection
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.parser.CollectionParserAlgebra
 
-class VimwikiCollectionParser[F[_]: ContextShift[?[_]]: Effect[?[_]]: Parallel[
-  ?[_]
-]: ConfigurationAlgebra[?[_]]]
+class VimwikiCollectionParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
+  *[_]
+]: ConfigurationAlgebra[*[_]]]
     extends CollectionParserAlgebra[F] {
   private val MAX_DEPTH: Int = 100
   private val logger: Logging[F] = new Logging(this.getClass())

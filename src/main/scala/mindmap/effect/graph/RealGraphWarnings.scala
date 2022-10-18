@@ -16,7 +16,7 @@ import mindmap.model.Tag
 import mindmap.model.graph.GraphNode
 import mindmap.model.graph.GraphWarningAlgebra
 
-class RealGraphWarnings[F[+_]: Monad[?[_]]] extends GraphWarningAlgebra[F] {
+class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
   private def singleTags(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
     graph.nodes.toList
       .mapFilter(node => {
