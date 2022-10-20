@@ -25,7 +25,7 @@ import org.commonmark.node._
 import org.commonmark.parser.Parser
 
 object Grapher extends IOApp {
-  private implicit val logger: Logging[IO] = new Logging(Demo.getClass())
+  private implicit val logger: Logging[IO] = new Logging(Grapher.getClass())
 
   def withPrinter(file: String): Resource[IO, PrintWriter] =
     Resource(IO {
