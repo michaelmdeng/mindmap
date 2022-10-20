@@ -22,7 +22,9 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(
     "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
-  )
+  ),
+  assembly / mainClass := Some("mindmap.Demo"),
+  assembly / assemblyJarName := "mindmap.jar"
 )
 
 lazy val root = (project in file("."))

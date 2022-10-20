@@ -3,6 +3,7 @@ package mindmap.effect.configuration
 import cats.effect.Effect
 import cats.syntax.applicative._
 import cats.syntax.functor._
+import cats.syntax.flatMap._
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -41,11 +42,18 @@ object RealConfiguration {
 
       def collectionConfiguration: F[CollectionConfiguration] =
         for {
-          ignores <- logger.action("read ignore file")(
-            Effect[F].delay(
-              Source.fromFile(f"${root}/${IGNORE_FILE}").getLines().toList
-            )
+          ignoreExists <- Effect[F].delay(
+            new File(f"${root}/${IGNORE_FILE}").exists()
           )
+          ignores <- if (!ignoreExists) {
+            Effect[F].pure(List())
+          } else {
+            logger.action("read ignore file")(
+              Effect[F].delay(
+                Source.fromFile(f"${root}/${IGNORE_FILE}").getLines().toList
+              )
+            )
+          }
         } yield {
           CollectionConfiguration(new File(root), ignores = ignores)
         }
