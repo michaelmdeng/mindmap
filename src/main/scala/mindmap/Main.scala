@@ -14,13 +14,16 @@ object Main extends IOApp {
     // TODO better arg parsing
     val className: String = args(0)
     className match {
-      case n if n == Grapher.getClass().getName().split('$').head => Grapher.run(args.tail)
-      case n if n == Server.getClass().getName().split('$').head => Server.run(args.tail)
-      case default => for {
-        _ <- logger.error(f"Could not find class with name: $className")
-      } yield {
-        ExitCode.Error
-      }
+      case n if n == Grapher.getClass().getName().split('$').head =>
+        Grapher.run(args.tail)
+      case n if n == Server.getClass().getName().split('$').head =>
+        Server.run(args.tail)
+      case default =>
+        for {
+          _ <- logger.error(f"Could not find class with name: $className")
+        } yield {
+          ExitCode.Error
+        }
     }
   }
 }
