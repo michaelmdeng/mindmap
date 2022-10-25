@@ -44,7 +44,7 @@ object Grapher extends IOApp {
       rootPath <- if (args.size > 0) {
         args(0).pure[IO]
       } else {
-        "/home/mdeng/MyDrive/vimwiki/wiki".pure[IO]
+        "/home/mdeng/MyDrive/vimwiki".pure[IO]
       }
       implicit0(config: ConfigurationAlgebra[IO]) <- RealConfiguration[IO](
         rootPath

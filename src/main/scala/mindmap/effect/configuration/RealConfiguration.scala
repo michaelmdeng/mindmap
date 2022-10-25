@@ -14,6 +14,7 @@ import mindmap.effect.Logging
 import mindmap.model.configuration.CollectionConfiguration
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.configuration.GraphConfiguration
+import mindmap.model.configuration.NoteConfiguration
 import mindmap.model.configuration.RepositoryConfiguration
 
 object RealConfiguration {
@@ -25,6 +26,9 @@ object RealConfiguration {
       private val logger: Logging[F] = new Logging(this.getClass())
       private val markdownFiles: PathMatcher =
         DEFAULT_FS.getPathMatcher(f"glob:${root}/**.md")
+      private val rootPath: File = new File(root)
+      private val collectionPath: File = new File(rootPath, "wiki")
+      private val notePath: File = new File(rootPath, "html")
 
       def isIgnoreFile(path: Path): F[Boolean] =
         for {
@@ -33,7 +37,8 @@ object RealConfiguration {
           val isMarkdown = markdownFiles.matches(path)
           val isIgnore = config.ignores
             .map(ignore => {
-              DEFAULT_FS.getPathMatcher(f"glob:${root}/${ignore}")
+              DEFAULT_FS
+                .getPathMatcher(f"glob:${collectionPath.getPath()}/${ignore}")
             })
             .foldLeft(false)((acc, matcher) => acc || matcher.matches(path))
 
@@ -43,20 +48,26 @@ object RealConfiguration {
       def collectionConfiguration: F[CollectionConfiguration] =
         for {
           ignoreExists <- Effect[F].delay(
-            new File(f"${root}/${IGNORE_FILE}").exists()
+            new File(f"${collectionPath.getPath()}/${IGNORE_FILE}").exists()
           )
           ignores <- if (!ignoreExists) {
             Effect[F].pure(List())
           } else {
             logger.action("read ignore file")(
               Effect[F].delay(
-                Source.fromFile(f"${root}/${IGNORE_FILE}").getLines().toList
+                Source
+                  .fromFile(f"${collectionPath.getPath()}/${IGNORE_FILE}")
+                  .getLines()
+                  .toList
               )
             )
           }
         } yield {
-          CollectionConfiguration(new File(root), ignores = ignores)
+          CollectionConfiguration(collectionPath, ignores = ignores)
         }
+
+      def noteConfiguration: F[NoteConfiguration] =
+        NoteConfiguration(notePath).pure[F]
 
       def repositoryConfiguration: F[RepositoryConfiguration] =
         RepositoryConfiguration.DEFAULT.pure[F]

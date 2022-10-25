@@ -30,6 +30,8 @@ var network = new vis.Network(container, data, options);
 network.on("doubleClick", function (obj) {
   var nodeId = obj.nodes[0];
   if (!clusterTags.hasOwnProperty(String(nodeId))) {
+    var file = nodes.find(n => n.id === nodeId).label
+    window.location = new URL('notes/' + file + '.html', window.location.origin)
     return;
   }
 
