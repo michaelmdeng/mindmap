@@ -1,12 +1,11 @@
-name: CI
+name: CD
 
 on:
-  pull_request:
+  push:
     branches: [ main ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -24,3 +23,8 @@ jobs:
       run: sbt test
     - name: Build
       run: sbt assembly
+    - name: Upload jar
+      uses: actions/upload-artifact@v3
+      with:
+        name: mindmap.jar
+        path: target/mindmap.jar
