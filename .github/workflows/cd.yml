@@ -1,9 +1,7 @@
-name: Build
+name: CD
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
@@ -25,7 +23,7 @@ jobs:
       run: sbt test
     - name: Build
       run: sbt assembly
-    - name: Upload
+    - name: Upload jar
       uses: actions/upload-artifact@v3
       with:
         name: mindmap.jar
