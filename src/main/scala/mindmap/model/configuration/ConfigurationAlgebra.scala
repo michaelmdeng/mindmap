@@ -5,6 +5,8 @@ import java.io.File
 trait ConfigurationAlgebra[F[_]] extends IgnoreAlgebra[F] {
   def collectionConfiguration: F[CollectionConfiguration]
 
+  def noteConfiguration: F[NoteConfiguration]
+
   def repositoryConfiguration: F[RepositoryConfiguration]
 
   def graphConfiguration: F[GraphConfiguration]
