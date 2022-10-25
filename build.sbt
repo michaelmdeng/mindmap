@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(
     "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
   ),
-  assembly / mainClass := Some("mindmap.Demo"),
+  assembly / mainClass := Some("mindmap.Main"),
   assembly / assemblyJarName := "mindmap.jar"
 )
 
