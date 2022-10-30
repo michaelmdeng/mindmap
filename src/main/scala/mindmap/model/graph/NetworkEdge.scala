@@ -7,7 +7,7 @@ case class NetworkEdge(
   smooth: Option[NetworkEdge.Smooth] = Some(NetworkEdge.Smooth("continuous")),
   dashes: Option[Boolean] = None,
   width: Option[Int] = None,
-  color: Option[String] = Some("black"),
+  color: Option[String] = None,
   physics: Option[Boolean] = None,
   hidden: Option[Boolean] = None
 )
