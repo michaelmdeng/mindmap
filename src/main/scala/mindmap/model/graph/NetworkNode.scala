@@ -35,26 +35,20 @@ object NetworkNode {
     NetworkNode(
       idx,
       label,
-      shape = Some("ellipse"),
-      color = Some("lightblue"),
-      title = Some(content)
+      group = Some("note")
     )
 
   def tagNode(idx: Long, label: String): NetworkNode = NetworkNode(
     idx,
     label,
-    shape = Some("box"),
-    color = Some("lightcoral")
+    group = Some("tag")
   )
 
   def clusterNode(idx: Long, tag: Tag, clustered: Seq[Note]): NetworkNode = {
-    val content = (tag.name +: clustered.map(note => note.title)).mkString(", ")
     NetworkNode(
       idx,
-      f"Cluster: ${tag.name}",
-      shape = Some("ellipse"),
-      color = Some("moccasin"),
-      title = Some(content),
+      tag.name,
+      group = Some("cluster"),
       mass = Some(sqrt(clustered.size + 1))
     )
   }

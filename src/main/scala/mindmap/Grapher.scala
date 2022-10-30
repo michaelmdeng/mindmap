@@ -83,26 +83,28 @@ object Grapher extends IOApp {
           (cluster.id.toString(), notes.map(_.id))
         }
       }
-      _ <- IO.shift *> withPrinter("data/mindmap-nodes.js").use(writer => {
-        logger.action("write data to data/mindmap-nodes.js")(IO {
-          implicit val formats = Serialization.formats(NoTypeHints)
-          writer.println(f"var nodes = ${write(nodes.toList)};")
-        })
-      })
-      _ <- IO.shift *> withPrinter("data/mindmap-edges.js").use(writer => {
-        logger.action("write data to data/mindmap-edges.js")(IO {
-          implicit val formats = Serialization.formats(NoTypeHints)
-          writer.println(f"var edges = ${write(edges.toList)};")
-        })
-      })
-      _ <- IO.shift *> withPrinter("data/mindmap-clusters.js").use(writer => {
-        logger.action("write data to data/mindmap-clusters.js")(
-          IO {
+      _ <- List(
+        withPrinter("public/network/mindmap-nodes.js").use(writer => {
+          logger.action("write data to public/mindmap-nodes.js")(IO {
             implicit val formats = Serialization.formats(NoTypeHints)
-            writer.println(f"var clusterTags = ${write(clusterTags)};")
-            writer.println(f"var clusterNotes = ${write(clusterNotes)};")
-          }
-        )
-      })
+            writer.println(f"var nodes = ${write(nodes.toList)};")
+          })
+        }),
+        withPrinter("public/network/mindmap-edges.js").use(writer => {
+          logger.action("write data to public/mindmap-edges.js")(IO {
+            implicit val formats = Serialization.formats(NoTypeHints)
+            writer.println(f"var edges = ${write(edges.toList)};")
+          })
+        }),
+        withPrinter("public/network/mindmap-clusters.js").use(writer => {
+          logger.action("write data to public/mindmap-clusters.js")(
+            IO {
+              implicit val formats = Serialization.formats(NoTypeHints)
+              writer.println(f"var clusterTags = ${write(clusterTags)};")
+              writer.println(f"var clusterNotes = ${write(clusterNotes)};")
+            }
+          )
+        })
+      ).parSequence
     } yield (ExitCode.Success)
 }

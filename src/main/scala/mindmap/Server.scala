@@ -13,7 +13,6 @@ import org.http4s.syntax.all._
 
 import mindmap.effect.Logging
 import mindmap.model.configuration.NoteConfiguration
-import mindmap.effect.configuration.RealConfiguration
 
 object Server extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Server.getClass())
@@ -25,8 +24,12 @@ object Server extends IOApp {
     }
   }
 
-  def createFileService(blocker: Blocker): HttpRoutes[IO] = {
-    fileService[IO](FileService.Config("public", blocker))
+  def createNetworkService(blocker: Blocker): HttpRoutes[IO] = {
+    fileService[IO](FileService.Config("public/network", blocker))
+  }
+
+  def createAssetsService(blocker: Blocker): HttpRoutes[IO] = {
+    fileService[IO](FileService.Config("public/assets", blocker))
   }
 
   def createNotesService(
@@ -39,10 +42,16 @@ object Server extends IOApp {
   def createServer(config: NoteConfiguration): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      files = createFileService(blocker)
       apis = createApiService()
       notes = createNotesService(blocker, config.root)
-      app = Router("/api" -> apis, "/public" -> files, "/notes" -> notes).orNotFound
+      assets = createAssetsService(blocker)
+      network = createNetworkService(blocker)
+      app = Router(
+        "/api" -> apis,
+        "/assets" -> assets,
+        "/network" -> network,
+        "/notes" -> notes
+      ).orNotFound
       server <- EmberServerBuilder
         .default[IO]
         .withHost("0.0.0.0")
@@ -53,16 +62,13 @@ object Server extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {
     for {
-      rootPath <- if (args.size > 0) {
+      path <- if (args.size > 0) {
         args(0).pure[IO]
       } else {
-        "/home/mdeng/MyDrive/vimwiki/wiki".pure[IO]
+        "/home/mdeng/MyDrive/vimwiki".pure[IO]
       }
-      config <- RealConfiguration[IO](
-        rootPath
-      ).pure[IO]
-      noteConfig <- config.noteConfiguration
-      _ <- createServer(noteConfig)
+      config = NoteConfiguration(new File(path))
+      _ <- createServer(config)
         .use(_ => logger.info("Initialized server") *> IO.never)
         .as(ExitCode.Success)
     } yield (ExitCode.Success)
