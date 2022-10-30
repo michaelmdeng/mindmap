@@ -35,8 +35,7 @@ object NetworkNode {
     NetworkNode(
       idx,
       label,
-      group = Some("note"),
-      title = Some(content)
+      group = Some("note")
     )
 
   def tagNode(idx: Long, label: String): NetworkNode = NetworkNode(
@@ -46,12 +45,10 @@ object NetworkNode {
   )
 
   def clusterNode(idx: Long, tag: Tag, clustered: Seq[Note]): NetworkNode = {
-    val content = (tag.name +: clustered.map(note => note.title)).mkString(", ")
     NetworkNode(
       idx,
       tag.name,
       group = Some("cluster"),
-      title = Some(content),
       mass = Some(sqrt(clustered.size + 1))
     )
   }
