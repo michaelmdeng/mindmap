@@ -65,14 +65,14 @@ var options = {
     barnesHut: {
       centralGravity: 1,
       gravitationalConstant: -20000,
-      springConstant: 0.01,
+      springConstant: 0.05,
       springLength: 50,
-      avoidOverlap: 1,
+      avoidOverlap: 0.75,
     },
     maxVelocity: 100,
     minVelocity: 2.5,
     stabilization: {
-      iterations: 100,
+      iterations: 200,
     },
   },
 };
