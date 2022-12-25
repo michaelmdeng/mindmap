@@ -1,8 +1,8 @@
 <!doctype html>
-<html>
+<html lang="en" class="html" data-theme="dark">
   <head>
     <title>Network</title>
-    <link rel="stylesheet" type="text/css" href="/assets/css/network.css"></link>
+    <link rel="stylesheet" type="text/css" href="/assets/css/default.css"></link>
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
@@ -10,10 +10,20 @@
     <script type="text/javascript" src="/assets/scripts/vis-network.min.js"></script>
   </head>
   <body>
+    <header>
+      <ul class="horizontal-list">
+        <li>
+          <a href="/network/index.html">Mindmap</a>&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;
+          <a href="/notes/index.html">Home</a>&nbsp;&nbsp;
+          <a href="/notes/diary/diary">Diary</a>&nbsp;&nbsp;
+        </li>
+      </ul>
+      <div class="dashed"></div>
+    </header>
     <div id="mynetwork"></div>
-    <script src="mindmap-nodes.js"></script>
-    <script src="mindmap-edges.js"></script>
-    <script src="mindmap-clusters.js"></script>
-    <script src="network.js"></script>
+    <script src="/network/mindmap-nodes.js"></script>
+    <script src="/network/mindmap-edges.js"></script>
+    <script src="/network/mindmap-clusters.js"></script>
+    <script src="/network/network.js"></script>
   </body>
 </html>

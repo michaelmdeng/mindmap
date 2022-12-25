@@ -1,6 +1,30 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap");
 
+#mynetwork {
+  width: 100%;
+  height: 800px;
+  border: 1px solid lightgray;
+  background-color: var(--bg);
+}
+
+#note-network {
+  width: 70%;
+  max-width: 720px;
+  height: 500px;
+  max-height: 600px;
+  border: 1px solid lightgray;
+  background-color: var(--bg);
+  margin: 0 auto;
+  padding: 0 0;
+}
+
+.w {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1em 1em;
+}
+
 ul.horizontal-list {
   display: flex;
   margin-top: 0em;
@@ -73,11 +97,6 @@ p {
 
 li {
   margin: 0.4em 0; }
-
-.w {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 4em 2em; }
 
 table, th, td {
   width: 100%;

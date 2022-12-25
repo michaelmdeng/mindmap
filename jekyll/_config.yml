@@ -11,8 +11,7 @@ author:
 baseurl: / # Change this to your relative path (ex: /blog/), or leave just a /
 markdown: kramdown
 permalink: /:title/
-paginate: 5
-paginate_path: /page:num/
+disable_disk_cache: true
 
 sass:
     sass_dir: _sass

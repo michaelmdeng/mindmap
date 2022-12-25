@@ -3,12 +3,17 @@
   {%- include head.html -%}
   <body>
     {%- include header.html -%}
+    <div id="note-network"></div>
     <main class="page-content" aria-label="Content">
       <div class="w">
         <h1 class="post-title">{{ page.name }}</h1>
         {{ content }}
         {% include toggle_theme_button.html %}
       </div>
+    <script src="/network/mindmap-nodes.js"></script>
+    <script src="/network/mindmap-edges.js"></script>
+    <script src="/network/mindmap-clusters.js"></script>
+    <script src="/network/sub-network.js"></script>
     </main>
   </body>
 </html>

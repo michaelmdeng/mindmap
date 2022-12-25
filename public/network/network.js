@@ -48,16 +48,16 @@ var options = {
   },
   physics: {
     barnesHut: {
-      centralGravity: 0.75,
-      gravitationalConstant: -15000,
-      springConstant: 0.015,
-      springLength: 350,
-      avoidOverlap: 0.6,
+      centralGravity: 1,
+      gravitationalConstant: -20000,
+      springConstant: 0.05,
+      springLength: 500,
+      avoidOverlap: 0.25,
     },
     maxVelocity: 100,
-    minVelocity: 2.5,
+    minVelocity: 5,
     stabilization: {
-      iterations: 200,
+      iterations: 500,
     },
   },
 };
