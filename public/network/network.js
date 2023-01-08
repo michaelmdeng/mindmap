@@ -1,5 +1,16 @@
 var container = document.getElementById('mynetwork');
 
+var clusterNodes = nodes.filter(node => node.group === "cluster");
+var tagNodes = nodes.filter(node => node.group === "tag");
+nodes = nodes.filter(node => node.group !== "cluster");
+nodes.forEach(node => {
+  node.hidden = false;
+  node.physics = true;
+})
+edges.forEach(edge => {
+  edge.hidden = false;
+  edge.physics = true;
+})
 var nodeData = new vis.DataSet(nodes);
 var edgeData = new vis.DataSet(edges);
 var data = {
@@ -50,8 +61,8 @@ var options = {
     barnesHut: {
       centralGravity: 1,
       gravitationalConstant: -20000,
-      springConstant: 0.05,
-      springLength: 500,
+      springConstant: 0.1,
+      springLength: 250,
       avoidOverlap: 0.25,
     },
     maxVelocity: 100,
@@ -64,38 +75,44 @@ var options = {
 
 var network = new vis.Network(container, data, options);
 
+function generateCluster(clusterOptions, childNodes, childEdges) {
+  tagNode = childNodes.find(node => node.group === "tag");
+  clusterOptions.label = tagNode.label;
+  clusterOptions.color = '#74c0fc';
+  clusterOptions.font = {
+    color: '#333',
+  };
+
+  return clusterOptions;
+}
+
+var options = {
+  joinCondition: function(parentNodeOptions, childNodeOptions) {
+    return !network.clustering.isCluster(childNodeOptions.id) && parentNodeOptions.group === "tag";
+  },
+  processProperties: generateCluster,
+}
+network.clustering.clusterByHubsize(10, options);
+
 network.on("doubleClick", function (obj) {
   var nodeId = obj.nodes[0];
-  if (!clusterTags.hasOwnProperty(String(nodeId))) {
-    var file = nodes.find(n => n.id === nodeId).label
-    window.location = new URL('notes/' + file, window.location.origin)
+  if (nodeId === undefined) {
     return;
   }
 
-  var otherNodeId = clusterTags[nodeId];
-
-  nodeData.update({id: nodeId, hidden: true, physics: false});
-  nodeData.update({id: otherNodeId, hidden: false, physics: true});
-
-  if (clusterNotes.hasOwnProperty(String(nodeId))) {
-    var clusterId = nodeId;
-    clusterNotes[clusterId].map((noteId) => {
-      nodeData.update({id: noteId, hidden: false, physics: true});
-
-      var connEdgeIds = network.getConnectedEdges(noteId);
-      connEdgeIds.map((connEdgeId) => {
-        edgeData.update({id: connEdgeId, hidden: false, physics: true});
-      });
-    });
-  } else {
-    var clusterId = otherNodeId;
-    var clusterConnEdgeIds = network.getConnectedEdges(clusterId);
-    clusterConnEdgeIds.map((clusterConnEdgeId) => {
-      edgeData.update({id: clusterConnEdgeId, hidden: false, physics: true});
-    });
-
-    clusterNotes[clusterId].map((noteId) => {
-      nodeData.update({id: noteId, hidden: true, physics: false});
-    });
+  var node = nodes.find(n => n.id === nodeId);
+  if (node !== undefined && node.group === "note") {
+    var file = nodes.find(n => n.id === nodeId).label
+    window.location = new URL('notes/' + file, window.location.origin)
+  } else if (node !== undefined && node.group === "tag") {
+    var options = {
+      joinCondition: function(parentNodeOptions, childNodeOptions) {
+        return !network.clustering.isCluster(childNodeOptions.id);
+      },
+      processProperties: generateCluster,
+    }
+    network.clustering.clusterByConnection(nodeId, options);
+  } else if (network.clustering.isCluster(nodeId)) {
+    network.clustering.openCluster(nodeId, {})
   }
 });
