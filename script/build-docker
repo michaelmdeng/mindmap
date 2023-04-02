@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+docker build --target build -t build -f Dockerfile.build .
+docker build --target build -t app -f Dockerfile.app .

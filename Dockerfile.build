@@ -11,8 +11,3 @@ COPY build.sbt /app/build.sbt
 COPY project /app/project
 # Build application
 RUN /dep/cs launch sbt -- assembly
-
-FROM eclipse-temurin:17 AS run
-WORKDIR /app
-COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
-ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar"]

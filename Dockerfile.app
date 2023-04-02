@@ -1,0 +1,4 @@
+FROM eclipse-temurin:17 AS app
+WORKDIR /app
+COPY --from=build:latest /app/target/mindmap.jar /app/target/mindmap.jar
+ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar"]
