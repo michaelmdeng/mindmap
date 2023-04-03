@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+sudo docker run \
+	-p 8080:8080 \
+	-v /home/mdeng/Source/mindmap/jekyll/_site:/data \
+	server:latest
