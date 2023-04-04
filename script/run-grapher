@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+sudo docker run \
+	-v /home/mdeng/MyDrive/vimwiki:/data \
+	server:latest
