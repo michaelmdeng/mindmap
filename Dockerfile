@@ -23,3 +23,11 @@ WORKDIR /app
 COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
 COPY public /app/public
 ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "mindmap.Grapher", "/data"]
+
+FROM ruby:3.2-buster as generator
+WORKDIR /app
+RUN gem install bundler
+COPY jekyll/Gemfile* /app
+RUN bundle install
+COPY jekyll /app
+ENTRYPOINT ["bundle", "exec", "jekyll", "build", "--config", "_config.yml", "--watch", "--incremental", "-s", "/data", "-d", "/generated"]

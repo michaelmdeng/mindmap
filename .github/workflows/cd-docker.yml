@@ -35,3 +35,10 @@ jobs:
         target: grapher
         tags: ghcr.io/${{ github.repository }}/grapher:${{ github.sha }},ghcr.io/${{ github.repository }}/grapher:latest
 
+    - name: Push generator
+      uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      with:
+        context: .
+        push: true
+        target: generator
+        tags: ghcr.io/${{ github.repository }}/generator:${{ github.sha }},ghcr.io/${{ github.repository }}/generator:latest
