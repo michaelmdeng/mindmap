@@ -24,6 +24,10 @@ object Server extends IOApp {
     }
   }
 
+  def createGraphService(blocker: Blocker): HttpRoutes[IO] = {
+    fileService[IO](FileService.Config("public/graph", blocker))
+  }
+
   def createNetworkService(blocker: Blocker): HttpRoutes[IO] = {
     fileService[IO](FileService.Config("public/network", blocker))
   }
@@ -45,10 +49,12 @@ object Server extends IOApp {
       apis = createApiService()
       notes = createNotesService(blocker, config.root)
       assets = createAssetsService(blocker)
+      graph = createGraphService(blocker)
       network = createNetworkService(blocker)
       app = Router(
         "/api" -> apis,
         "/assets" -> assets,
+        "/graph" -> graph,
         "/network" -> network,
         "/notes" -> notes
       ).orNotFound

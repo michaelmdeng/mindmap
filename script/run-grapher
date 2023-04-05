@@ -2,5 +2,5 @@
 
 sudo docker run \
 	-v ~/data/Dropbox/vimwiki:/data \
-	-v ~/generated/network:/generated \
+	-v ~/generated/graph:/generated \
 	ghcr.io/michaelmdeng/mindmap/grapher:latest

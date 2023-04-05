@@ -3,5 +3,5 @@
 sudo docker run \
 	-p 8080:8080 \
 	-v ~/generated/_site:/data \
-	-v ~/generated/network:/app/public/network \
+	-v ~/generated/graph:/app/public/graph \
 	ghcr.io/michaelmdeng/mindmap/server:latest
