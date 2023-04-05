@@ -46,6 +46,11 @@ object Grapher extends IOApp {
       } else {
         "/home/mdeng/MyDrive/vimwiki".pure[IO]
       }
+      networkPath <- if (args.size > 1) {
+        args(1).pure[IO]
+      } else {
+        "public/network".pure[IO]
+      }
       implicit0(config: ConfigurationAlgebra[IO]) <- RealConfiguration[IO](
         rootPath
       ).pure[IO]
@@ -84,19 +89,19 @@ object Grapher extends IOApp {
         }
       }
       _ <- List(
-        withPrinter("public/network/mindmap-nodes.js").use(writer => {
+        withPrinter(f"$networkPath/mindmap-nodes.js").use(writer => {
           logger.action("write data to public/mindmap-nodes.js")(IO {
             implicit val formats = Serialization.formats(NoTypeHints)
             writer.println(f"var nodes = ${write(nodes.toList)};")
           })
         }),
-        withPrinter("public/network/mindmap-edges.js").use(writer => {
+        withPrinter(f"$networkPath/mindmap-edges.js").use(writer => {
           logger.action("write data to public/mindmap-edges.js")(IO {
             implicit val formats = Serialization.formats(NoTypeHints)
             writer.println(f"var edges = ${write(edges.toList)};")
           })
         }),
-        withPrinter("public/network/mindmap-clusters.js").use(writer => {
+        withPrinter(f"$networkPath/mindmap-clusters.js").use(writer => {
           logger.action("write data to public/mindmap-clusters.js")(
             IO {
               implicit val formats = Serialization.formats(NoTypeHints)

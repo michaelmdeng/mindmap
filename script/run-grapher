@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 sudo docker run \
-	-v /home/mdeng/MyDrive/vimwiki:/data \
-	server:latest
+	-v ~/data/Dropbox/vimwiki:/data \
+	-v ~/generated/network:/generated \
+	ghcr.io/michaelmdeng/mindmap/grapher:latest
