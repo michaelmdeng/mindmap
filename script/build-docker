@@ -3,3 +3,4 @@
 docker build --target build -t build .
 docker build --target server -t server .
 docker build --target grapher -t grapher .
+docker build --target generator -t generator .
