@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-docker build -t build -f Dockerfile.build .
-docker build -t grapher -f Dockerfile.grapher .
-docker build -t server -f Dockerfile.server .
+docker build --target build -t build .
+docker build --target server -t server .
+docker build --target grapher -t grapher .

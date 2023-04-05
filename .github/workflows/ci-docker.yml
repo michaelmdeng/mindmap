@@ -14,4 +14,3 @@ jobs:
 
     - name: Build the Docker image
       run: ./script/build-docker
-
