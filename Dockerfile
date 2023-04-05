@@ -22,7 +22,7 @@ FROM eclipse-temurin:17 AS grapher
 WORKDIR /app
 COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
 COPY public /app/public
-ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "mindmap.Grapher", "/data"]
+ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "mindmap.Grapher", "/data", "/generated"]
 
 FROM ruby:3.2-buster as generator
 WORKDIR /app

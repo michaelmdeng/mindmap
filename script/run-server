@@ -2,5 +2,6 @@
 
 sudo docker run \
 	-p 8080:8080 \
-	-v /home/mdeng/Source/mindmap/jekyll/_site:/data \
-	server:latest
+	-v ~/generated/_site:/data \
+	-v ~/generated/graph:/app/public/graph \
+	ghcr.io/michaelmdeng/mindmap/server:latest
