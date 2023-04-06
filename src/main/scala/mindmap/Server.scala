@@ -44,7 +44,6 @@ object Server extends IOApp {
       graph = createGraphService(blocker)
       network = createNetworkService(blocker)
       app = Router(
-        "/api" -> apis,
         "/assets" -> assets,
         "/graph" -> graph,
         "/network" -> network,
