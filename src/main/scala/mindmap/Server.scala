@@ -17,13 +17,6 @@ import mindmap.model.configuration.NoteConfiguration
 object Server extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Server.getClass())
 
-  def createApiService(): HttpRoutes[IO] = {
-    HttpRoutes.of[IO] {
-      case GET -> Root / "hello" / name =>
-        Ok(s"Hello, $name!")
-    }
-  }
-
   def createGraphService(blocker: Blocker): HttpRoutes[IO] = {
     fileService[IO](FileService.Config("public/graph", blocker))
   }
@@ -46,7 +39,6 @@ object Server extends IOApp {
   def createServer(config: NoteConfiguration): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      apis = createApiService()
       notes = createNotesService(blocker, config.root)
       assets = createAssetsService(blocker)
       graph = createGraphService(blocker)
@@ -56,7 +48,8 @@ object Server extends IOApp {
         "/assets" -> assets,
         "/graph" -> graph,
         "/network" -> network,
-        "/notes" -> notes
+        "/notes" -> notes,
+        "/" -> network
       ).orNotFound
       server <- EmberServerBuilder
         .default[IO]
