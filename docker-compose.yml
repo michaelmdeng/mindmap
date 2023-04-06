@@ -1,0 +1,19 @@
+version: '3'
+services:
+  server:
+    image: ghcr.io/michaelmdeng/mindmap/server:latest
+    ports:
+      - "80:8080"
+    volumes:
+      - ./generated/_site:/data
+      - ./generated/graph:/app/public/graph
+  grapher:
+    image: ghcr.io/michaelmdeng/mindmap/grapher:latest
+    volumes:
+      - ./data/Dropbox/vimwiki:/data
+      - ./generated/graph:/generated
+  generator:
+    image: ghcr.io/michaelmdeng/mindmap/generator:latest
+    volumes:
+      - ./data/Dropbox/vimwiki/wiki:/data
+      - ./generated:/generated
