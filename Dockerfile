@@ -34,4 +34,5 @@ FROM ruby:3.1-buster as generator
 WORKDIR /app
 COPY --from=generator-build /usr/local/bundle /usr/local/bundle
 COPY jekyll /app
+COPY jekyll/_layouts jekyll/_includes /data/
 ENTRYPOINT ["bundle", "exec", "jekyll", "build", "--config", "_config.yml", "--watch", "--incremental", "-s", "/data", "-d", "/generated/_site"]
