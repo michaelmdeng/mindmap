@@ -177,32 +177,9 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
 
       val nodeByIdx = networkNodes.map(node => (node.id, node)).toMap
 
-      val clusterTags = idxByMember.flatMap {
-        case (Right(cluster), clusterIdx) => {
-          val t =
-            (nodeByIdx(clusterIdx), nodeByIdx(idxByMember(Left(cluster.tag))))
-          Seq(t, t.swap)
-        }
-        case _ => Seq()
-      }.toMap
-
-      val clusterNotes = idxByMember.toList.mapFilter {
-        case (Right(cluster), clusterIdx) => {
-          Some(
-            (
-              nodeByIdx(clusterIdx),
-              cluster.notes.map(note => nodeByIdx(idxByMember(Left(note))))
-            )
-          )
-        }
-        case _ => None
-      }.toMap
-
       Network(
         nodes = networkNodes,
-        edges = networkEdges,
-        clusterTags = clusterTags,
-        clusterNotes = clusterNotes
+        edges = networkEdges
       )
     }
 }
