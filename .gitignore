@@ -1,7 +1,6 @@
 ### Custom ###
-public/network/mindmap-clusters.js
-public/network/mindmap-nodes.js
-public/network/mindmap-edges.js
+public/graph/mindmap-nodes.js
+public/graph/mindmap-edges.js
 
 ### Bloop ###
 .bloop/
