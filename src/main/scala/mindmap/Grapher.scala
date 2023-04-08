@@ -49,7 +49,7 @@ object Grapher extends IOApp {
       networkPath <- if (args.size > 1) {
         args(1).pure[IO]
       } else {
-        "public/network".pure[IO]
+        "public/graph".pure[IO]
       }
       implicit0(config: ConfigurationAlgebra[IO]) <- RealConfiguration[IO](
         rootPath
@@ -80,14 +80,6 @@ object Grapher extends IOApp {
       )
       nodes = network.nodes
       edges = network.edges
-      clusterTags = network.clusterTags.map {
-        case (n1, n2) => (n1.id.toString(), n2.id)
-      }
-      clusterNotes = network.clusterNotes.map {
-        case (cluster, notes) => {
-          (cluster.id.toString(), notes.map(_.id))
-        }
-      }
       _ <- List(
         withPrinter(f"$networkPath/mindmap-nodes.js").use(writer => {
           logger.action("write data to public/mindmap-nodes.js")(IO {
@@ -100,15 +92,6 @@ object Grapher extends IOApp {
             implicit val formats = Serialization.formats(NoTypeHints)
             writer.println(f"var edges = ${write(edges.toList)};")
           })
-        }),
-        withPrinter(f"$networkPath/mindmap-clusters.js").use(writer => {
-          logger.action("write data to public/mindmap-clusters.js")(
-            IO {
-              implicit val formats = Serialization.formats(NoTypeHints)
-              writer.println(f"var clusterTags = ${write(clusterTags)};")
-              writer.println(f"var clusterNotes = ${write(clusterNotes)};")
-            }
-          )
         })
       ).parSequence
     } yield (ExitCode.Success)
