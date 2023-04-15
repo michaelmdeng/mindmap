@@ -20,6 +20,8 @@ import mindmap.effect.parser.MarkdownZettelkastenParser
 import mindmap.effect.parser.RealRepositoryWarnings
 import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.graph.Network
+import mindmap.model.Collection
 
 import org.commonmark.node._
 import org.commonmark.parser.Parser
@@ -38,6 +40,54 @@ object Grapher extends IOApp {
         }
       )
     })
+
+  def graph(config: ConfigurationAlgebra[IO]): IO[(Collection, Network)] =
+    for {
+      // implicit val c = config
+      _ <- IO.unit
+      implicit0(c: ConfigurationAlgebra[IO]) = config
+      networkPath = "public/graph"
+      collection <- IO.shift *> logger.action("parse collection")(
+        new VimwikiCollectionParser[IO]().parseCollection(config)
+      )
+      repository <- IO.shift *> logger.action("parse repository")(
+        new CommonMarkRepositoryParser[IO]().parseRepository(collection)
+      )
+      repoWarnings <- new RealRepositoryWarnings[IO]().warnings(repository)
+      _ <- IO.shift *> logger.action("generate repository warnings")(
+        repoWarnings.toList.map(warning => logger.warn(warning)).sequence
+      )
+      zettel <- IO.shift *> logger.action("parse Zettelkasten")(
+        new MarkdownZettelkastenParser[IO]().parseZettelkasten(repository)
+      )
+      graphGen = new GraphGenerator[IO](zettel)
+      graph <- IO.shift *> logger.action("generate graph")(
+        graphGen.graph()
+      )
+      warnings <- new RealGraphWarnings[IO].warnings(graph)
+      _ <- IO.shift *> logger.action("generate graph warnings")(
+        warnings.toList.map(warning => logger.warn(warning)).sequence
+      )
+      network <- IO.shift *> logger.action("generate network")(
+        graphGen.network(graph)
+      )
+      nodes = network.nodes
+      edges = network.edges
+      _ <- List(
+        withPrinter(f"$networkPath/mindmap-nodes.js").use(writer => {
+          logger.action("write data to public/mindmap-nodes.js")(IO {
+            implicit val formats = Serialization.formats(NoTypeHints)
+            writer.println(f"var nodes = ${write(nodes.toList)};")
+          })
+        }),
+        withPrinter(f"$networkPath/mindmap-edges.js").use(writer => {
+          logger.action("write data to public/mindmap-edges.js")(IO {
+            implicit val formats = Serialization.formats(NoTypeHints)
+            writer.println(f"var edges = ${write(edges.toList)};")
+          })
+        })
+      ).parSequence
+    } yield ((collection, network))
 
   def run(args: List[String]): IO[ExitCode] =
     for {
