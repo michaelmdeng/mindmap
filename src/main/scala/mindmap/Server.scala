@@ -10,9 +10,12 @@ import org.http4s.implicits._
 import org.http4s.server._
 import org.http4s.server.staticcontent._
 import org.http4s.syntax.all._
+import play.twirl.api._
 
 import mindmap.effect.Logging
-import mindmap.model.configuration.NoteConfiguration
+import mindmap.effect.configuration.RealConfiguration
+import mindmap.effect.controller.NotesController
+import mindmap.model.configuration.ConfigurationAlgebra
 
 object Server extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Server.getClass())
@@ -29,17 +32,11 @@ object Server extends IOApp {
     fileService[IO](FileService.Config("public/assets", blocker))
   }
 
-  def createNotesService(
-    blocker: Blocker,
-    notesPath: File
-  ): HttpRoutes[IO] = {
-    fileService[IO](FileService.Config(notesPath.getPath(), blocker))
-  }
-
-  def createServer(config: NoteConfiguration): Resource[IO, Server] =
+  def createServer(config: ConfigurationAlgebra[IO]): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      notes = createNotesService(blocker, config.root)
+      (collection, _) <- Resource.eval(Grapher.graph(config))
+      notes = new NotesController[IO](collection).routes()
       assets = createAssetsService(blocker)
       graph = createGraphService(blocker)
       network = createNetworkService(blocker)
@@ -65,7 +62,7 @@ object Server extends IOApp {
       } else {
         "/home/mdeng/MyDrive/vimwiki".pure[IO]
       }
-      config = NoteConfiguration(new File(path))
+      config = RealConfiguration[IO](path)
       _ <- createServer(config)
         .use(_ => logger.info("Initialized server") *> IO.never)
         .as(ExitCode.Success)

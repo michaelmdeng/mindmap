@@ -5,7 +5,7 @@ services:
     ports:
       - "80:8080"
     volumes:
-      - ./generated/_site:/data
+      - ./data/Dropbox/vimwiki:/data
       - ./generated/graph:/app/public/graph
   grapher:
     image: ghcr.io/michaelmdeng/mindmap/grapher:latest

@@ -37,3 +37,4 @@ lazy val root = (project in file("."))
   .settings(
     commonSettings
   )
+  .enablePlugins(SbtTwirl)
