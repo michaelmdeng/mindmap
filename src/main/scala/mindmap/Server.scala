@@ -15,6 +15,7 @@ import play.twirl.api._
 import mindmap.effect.Logging
 import mindmap.effect.configuration.RealConfiguration
 import mindmap.effect.controller.NotesController
+import mindmap.effect.controller.TagsController
 import mindmap.model.configuration.ConfigurationAlgebra
 
 object Server extends IOApp {
@@ -37,6 +38,7 @@ object Server extends IOApp {
       blocker <- Blocker[IO]
       (collection, _) <- Resource.eval(Grapher.graph(config))
       notes = new NotesController[IO](collection).routes()
+      tags = new TagsController[IO](collection).routes()
       assets = createAssetsService(blocker)
       graph = createGraphService(blocker)
       network = createNetworkService(blocker)
@@ -45,6 +47,7 @@ object Server extends IOApp {
         "/graph" -> graph,
         "/network" -> network,
         "/notes" -> notes,
+        "/tags" -> tags,
         "/" -> network
       ).orNotFound
       server <- EmberServerBuilder

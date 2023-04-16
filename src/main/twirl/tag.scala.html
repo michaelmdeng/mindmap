@@ -1,6 +1,6 @@
 @(
   title: String,
-  content: play.twirl.api.Html
+  notes: List[mindmap.model.Note]
 )
 <!DOCTYPE html>
 <html lang="en" class="html" data-theme="dark">
@@ -33,7 +33,14 @@
     <main class="page-content" aria-label="Content">
       <div class="w">
         <h1 class="post-title">@title</h1>
-        @content
+        <h2>Linked Notes</h2>
+        @for(note <- notes) {
+          <li>
+            <a href="@{s"/notes/${note.title}"}">
+              @note.title
+            </a>
+          </li>
+        }
       </div>
     <script src="/graph/mindmap-nodes.js"></script>
     <script src="/graph/mindmap-edges.js"></script>
