@@ -44,9 +44,9 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
       )
       .sorted
     val template = html.warnings(
-      singleTags.toList,
-      singleNotes.toList,
-      overlappingTags.toList
+      singleTags,
+      singleNotes,
+      overlappingTags
     )
     Ok(template.body, Header("Content-Type", "text/html"))
   }
