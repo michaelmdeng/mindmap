@@ -14,10 +14,10 @@ import org.http4s.Response
 import org.http4s.dsl.Http4sDsl
 import play.twirl.api.HtmlFormat
 
-import mindmap.model.Collection
+import mindmap.model.Zettelkasten
 
 class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
-  collection: Collection
+  zettel: Zettelkasten
 ) extends Http4sDsl[F] {
   private def parse(content: String): F[String] = {
     val parser = Parser.builder().build()
@@ -29,7 +29,7 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
   private def getByName(name: String): F[Response[F]] = {
     for {
       note <- MonadError[F, Throwable].fromOption(
-        collection.notes.find(_.title == name),
+        zettel.notes.find(_.title == name),
         new Exception("Cannot find note")
       )
       c <- parse(note.content)

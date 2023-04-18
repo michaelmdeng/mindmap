@@ -21,7 +21,7 @@ import mindmap.effect.parser.RealRepositoryWarnings
 import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.graph.Network
-import mindmap.model.Collection
+import mindmap.model.Zettelkasten
 
 import org.commonmark.node._
 import org.commonmark.parser.Parser
@@ -41,9 +41,8 @@ object Grapher extends IOApp {
       )
     })
 
-  def graph(config: ConfigurationAlgebra[IO]): IO[(Collection, Network)] =
+  def graph(config: ConfigurationAlgebra[IO]): IO[(Zettelkasten, Network)] =
     for {
-      // implicit val c = config
       _ <- IO.unit
       implicit0(c: ConfigurationAlgebra[IO]) = config
       networkPath = "public/graph"
@@ -87,7 +86,7 @@ object Grapher extends IOApp {
           })
         })
       ).parSequence
-    } yield ((collection, network))
+    } yield ((zettel, network))
 
   def run(args: List[String]): IO[ExitCode] =
     for {
