@@ -22,9 +22,8 @@ import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.graph.Network
 import mindmap.model.Zettelkasten
-
-import org.commonmark.node._
-import org.commonmark.parser.Parser
+import mindmap.model.graph.GraphWarning.instances._
+import mindmap.model.graph.GraphWarning
 
 object Grapher extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Grapher.getClass())
@@ -41,7 +40,9 @@ object Grapher extends IOApp {
       )
     })
 
-  def graph(config: ConfigurationAlgebra[IO]): IO[(Zettelkasten, Network)] =
+  def graph(
+    config: ConfigurationAlgebra[IO]
+  ): IO[(Zettelkasten, Iterable[GraphWarning])] =
     for {
       _ <- IO.unit
       implicit0(c: ConfigurationAlgebra[IO]) = config
@@ -65,7 +66,11 @@ object Grapher extends IOApp {
       )
       warnings <- new RealGraphWarnings[IO].warnings(graph)
       _ <- IO.shift *> logger.action("generate graph warnings")(
-        warnings.toList.map(warning => logger.warn(warning)).sequence
+        warnings.toList
+          .map(warning => {
+            logger.warn(warning.show)
+          })
+          .sequence
       )
       network <- IO.shift *> logger.action("generate network")(
         graphGen.network(graph)
@@ -86,7 +91,7 @@ object Grapher extends IOApp {
           })
         })
       ).parSequence
-    } yield ((zettel, network))
+    } yield ((zettel, warnings))
 
   def run(args: List[String]): IO[ExitCode] =
     for {
@@ -122,7 +127,11 @@ object Grapher extends IOApp {
       )
       warnings <- new RealGraphWarnings[IO].warnings(graph)
       _ <- IO.shift *> logger.action("generate graph warnings")(
-        warnings.toList.map(warning => logger.warn(warning)).sequence
+        warnings.toList
+          .map(warning => {
+            logger.warn(warning.show)
+          })
+          .sequence
       )
       network <- IO.shift *> logger.action("generate network")(
         graphGen.network(graph)
