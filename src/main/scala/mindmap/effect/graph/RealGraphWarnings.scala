@@ -13,11 +13,15 @@ import scalax.collection.GraphTraversal.AnyConnected
 import mindmap.model.Entity
 import mindmap.model.Note
 import mindmap.model.Tag
+import mindmap.model.graph.SingleTag
+import mindmap.model.graph.SingleNote
+import mindmap.model.graph.OverlappingTags
 import mindmap.model.graph.GraphNode
 import mindmap.model.graph.GraphWarningAlgebra
+import mindmap.model.graph.GraphWarning
 
 class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
-  private def singleTags(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
+  private def singleTags(graph: Graph[Entity, DiEdge]): F[List[SingleTag]] = {
     graph.nodes.toList
       .mapFilter(node => {
         for {
@@ -25,13 +29,12 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
             .tagNode(node)
             .filter(_.node.degree <= 1)
             .map(_.tag)
-        } yield (singleTag)
+        } yield (SingleTag(singleTag))
       })
-      .map(tag => f"Tag: ${tag.name} only has one linked note")
       .pure[F]
   }
 
-  private def singleNotes(graph: Graph[Entity, DiEdge]): F[Iterable[String]] = {
+  private def singleNotes(graph: Graph[Entity, DiEdge]): F[List[SingleNote]] = {
     graph.nodes.toList
       .mapFilter(node => {
         for {
@@ -39,17 +42,14 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
             .noteNode(node)
             .filter(_.node.degree == 0)
             .map(_.note)
-        } yield (singleNote)
-      })
-      .map(note => {
-        f"Note: ${note.title} is not linked to any other notes or tags"
+        } yield (SingleNote(singleNote))
       })
       .pure[F]
   }
 
   private def overlappingTags(
     graph: Graph[Entity, DiEdge]
-  ): F[Iterable[String]] = {
+  ): F[Iterable[OverlappingTags]] = {
     graph.nodes
       .filter(node => {
         node.toOuter match {
@@ -80,9 +80,9 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
           if (connectedNotes
               .filter(note => !connectedTag.neighbors.contains(note))
               .isEmpty) {
-            val overlappedTag = connectedTag.toOuter.asInstanceOf[Tag].name
+            val overlappedTag = connectedTag.toOuter.asInstanceOf[Tag]
             Some(
-              f"Tag: ${tag.name} shares all notes with tag: ${overlappedTag}"
+              OverlappingTags(tag, overlappedTag)
             )
           } else {
             None
@@ -92,7 +92,7 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
       .pure[F]
   }
 
-  def warnings(graph: Graph[Entity, DiEdge]): F[Iterable[String]] =
+  def warnings(graph: Graph[Entity, DiEdge]): F[Iterable[GraphWarning]] = {
     for {
       tagWarnings <- singleTags(graph)
       noteWarnings <- singleNotes(graph)
@@ -100,4 +100,5 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
     } yield {
       tagWarnings ++ noteWarnings ++ tagOverlapWarnings
     }
+  }
 }
