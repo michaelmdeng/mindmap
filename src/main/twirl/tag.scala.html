@@ -2,49 +2,22 @@
   title: String,
   notes: List[mindmap.model.Note]
 )
-<!DOCTYPE html>
-<html lang="en" class="html" data-theme="dark">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>@title</title>
-
-    <link rel="stylesheet" href="/assets/css/default.css" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <script src="/assets/scripts/vis-network.min.js"></script>
-  </head>
-  <body>
-    <header>
-      <ul class="horizontal-list">
-        <li>
-          <a href="/network/index.html">Mindmap</a>&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;
-          <a href="/notes/index">Home</a>&nbsp;&nbsp;
-          <a href="/notes/diary/diary">Diary</a>&nbsp;&nbsp;
-        </li>
-      </ul>
-      <div class="dashed"></div>
-    </header>
-    <div id="note-network"></div>
-    <main class="page-content" aria-label="Content">
-      <div class="w">
-        <h1 class="post-title">@title</h1>
-        <h2>Linked Notes</h2>
-        @for(note <- notes) {
-          <li>
-            <a href="@{s"/notes/${note.title}"}">
-              @note.title
-            </a>
-          </li>
-        }
-      </div>
-    <script src="/graph/mindmap-nodes.js"></script>
-    <script src="/graph/mindmap-edges.js"></script>
-    <script src="/network/sub-network.js"></script>
-    </main>
-  </body>
-</html>
+@main(title) {
+  @network_scripts()
+} {
+  @menubar()
+} {
+  <div id="note-network"></div>
+  <div class="w">
+    <h1 class="post-title">@title</h1>
+    <h2>Linked Notes</h2>
+    @for(note <- notes) {
+      <li>
+        <a href="@{s"/notes/${note.title}"}">
+          @note.title
+        </a>
+      </li>
+    }
+  </div>
+}
