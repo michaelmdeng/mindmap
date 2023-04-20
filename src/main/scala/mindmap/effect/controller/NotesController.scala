@@ -14,10 +14,10 @@ import org.http4s.Response
 import org.http4s.dsl.Http4sDsl
 import play.twirl.api.HtmlFormat
 
-import mindmap.model.Zettelkasten
+import mindmap.model.ZettelkastenAlgebra
 
 class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
-  zettel: Zettelkasten
+  zettelRepository: ZettelkastenAlgebra[F]
 ) extends Http4sDsl[F] {
   private def parse(content: String): F[String] = {
     val parser = Parser.builder().build()
@@ -26,11 +26,12 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
     renderer.render(node).pure[F]
   }
 
-  private def getByName(name: String): F[Response[F]] = {
+  private def get(name: String): F[Response[F]] = {
     for {
+      noteOpt <- zettelRepository.getNote(name)
       note <- MonadError[F, Throwable].fromOption(
-        zettel.notes.find(_.title == name),
-        new Exception("Cannot find note")
+        noteOpt,
+        new Exception(f"Cannot find note $name")
       )
       c <- parse(note.content)
       template = html.note(note.title, HtmlFormat.raw(c))
@@ -39,6 +40,6 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
   }
 
   def routes(): HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root / name => getByName(name)
+    case GET -> Root / name => get(name)
   }
 }
