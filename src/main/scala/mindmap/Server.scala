@@ -18,6 +18,7 @@ import mindmap.effect.controller.NotesController
 import mindmap.effect.controller.TagsController
 import mindmap.effect.controller.WarningController
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.effect.zettelkasten.MemoryZettelkastenRepository
 
 object Server extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Server.getClass())
@@ -37,10 +38,13 @@ object Server extends IOApp {
   def createServer(config: ConfigurationAlgebra[IO]): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      (collection, graphWarnings) <- Resource.eval(Grapher.graph(config))
-      notes = new NotesController[IO](collection).routes()
-      tags = new TagsController[IO](collection).routes()
-      warnings = new WarningController[IO](graphWarnings).routes()
+      (collection, graphWarnings, repoWarnings) <- Resource.eval(
+        Grapher.graph(config)
+      )
+      zettelRepo = new MemoryZettelkastenRepository[IO](collection)
+      notes = new NotesController[IO](zettelRepo).routes()
+      tags = new TagsController[IO](zettelRepo).routes()
+      warnings = new WarningController[IO](graphWarnings, repoWarnings).routes()
       assets = createAssetsService(blocker)
       graph = createGraphService(blocker)
       network = createNetworkService(blocker)
