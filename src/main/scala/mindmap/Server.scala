@@ -17,8 +17,8 @@ import mindmap.effect.configuration.RealConfiguration
 import mindmap.effect.controller.NotesController
 import mindmap.effect.controller.TagsController
 import mindmap.effect.controller.WarningController
-import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.effect.zettelkasten.MemoryZettelkastenRepository
+import mindmap.model.configuration.ConfigurationAlgebra
 
 object Server extends IOApp {
   private implicit val logger: Logging[IO] = new Logging(Server.getClass())
