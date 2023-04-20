@@ -71,7 +71,7 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Paralle
   }
 
   private def parseLinks(content: String): F[List[UnresolvedLink]] = {
-    val parser = Parser.builder().build();
+    val parser = Parser.builder().build()
     val node = parser.parse(content)
     val collector = new LinkCollector()
     node.accept(collector)

@@ -3,63 +3,39 @@
   singleNotes: List[mindmap.model.graph.SingleNote],
   overlappingTags: List[mindmap.model.graph.OverlappingTags]
 )
-<!DOCTYPE html>
-<html lang="en" class="html" data-theme="dark">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Warnings</title>
-
-    <link rel="stylesheet" href="/assets/css/default.css" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-  </head>
-  <body>
-    <header>
-      <ul class="horizontal-list">
-        <li>
-          <a href="/network/index.html">Mindmap</a>&nbsp;&nbsp;<b>|</b>&nbsp;&nbsp;
-          <a href="/notes/index">Home</a>&nbsp;&nbsp;
-          <a href="/notes/diary/diary">Diary</a>&nbsp;&nbsp;
-        </li>
-      </ul>
-      <div class="dashed"></div>
-    </header>
-    <main class="page-content" aria-label="Content">
-      <div class="w">
-        <h1>Warnings</h1>
-        <h2>Single Tags</h2>
-        @for(t <- singleTags) {
-          <li>
-            <a href="@{s"/tags/${t.tag.name}"}">
-              @t.tag.name
-            </a>
-          </li>
-        }
-        <h2>Single Notes</h2>
-        @for(n <- singleNotes) {
-          <li>
-            <a href="@{s"/notes/${n.note.title}"}">
-              @n.note.title
-            </a>
-          </li>
-        }
-        <h2>Overlapping Tags</h2>
-        @for(t <- overlappingTags) {
-          <li>
-            <a href="@{s"/tags/${t.first.name}"}">
-              @t.first.name
-            </a> -
-            <a href="@{s"/tags/${t.second.name}"}">
-              @t.second.name
-            </a>
-          </li>
-        }
-      </div>
-    </main>
-  </body>
-</html>
+@main("Warnings"){
+} {
+  @menubar()
+} {
+  <div class="w">
+    <h1>Warnings</h1>
+    <h2>Single Tags</h2>
+    @for(t <- singleTags) {
+      <li>
+        <a href="@{s"/tags/${t.tag.name}"}">
+          @t.tag.name
+        </a>
+      </li>
+    }
+    <h2>Single Notes</h2>
+    @for(n <- singleNotes) {
+      <li>
+        <a href="@{s"/notes/${n.note.title}"}">
+          @n.note.title
+        </a>
+      </li>
+    }
+    <h2>Overlapping Tags</h2>
+    @for(t <- overlappingTags) {
+      <li>
+        <a href="@{s"/tags/${t.first.name}"}">
+          @t.first.name
+        </a> -
+        <a href="@{s"/tags/${t.second.name}"}">
+          @t.second.name
+        </a>
+      </li>
+    }
+  </div>
+}

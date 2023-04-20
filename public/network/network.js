@@ -1,7 +1,5 @@
 var container = document.getElementById('mynetwork');
 
-var clusterNodes = nodes.filter(node => node.group === "cluster");
-var tagNodes = nodes.filter(node => node.group === "tag");
 nodes = nodes.filter(node => node.group !== "cluster");
 nodes.forEach(node => {
   node.hidden = false;
