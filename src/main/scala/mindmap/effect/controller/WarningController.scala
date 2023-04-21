@@ -14,12 +14,24 @@ import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.OverlappingTags
 import mindmap.model.graph.SingleNote
 import mindmap.model.graph.SingleTag
+import mindmap.model.parser.RepositoryWarning
+import mindmap.model.parser.RepositoryWarning.instances._
+import mindmap.model.parser.UnresolvableLink
 
 class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
-  warnings: Iterable[GraphWarning]
+  graphWarnings: Iterable[GraphWarning],
+  repoWarnings: Iterable[RepositoryWarning]
 ) extends Http4sDsl[F] {
   def get(): F[Response[F]] = {
-    val singleTags = warnings.toList
+    val unresolvableLinks = repoWarnings.toList
+      .mapFilter(warning =>
+        warning match {
+          case u: UnresolvableLink => Some(u)
+          case default => None
+        }
+      )
+      .sorted
+    val singleTags = graphWarnings.toList
       .mapFilter(warning =>
         warning match {
           case t: SingleTag => Some(t)
@@ -27,7 +39,7 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
         }
       )
       .sorted
-    val singleNotes = warnings.toList
+    val singleNotes = graphWarnings.toList
       .mapFilter(warning =>
         warning match {
           case n: SingleNote => Some(n)
@@ -35,7 +47,7 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
         }
       )
       .sorted
-    val overlappingTags = warnings.toList
+    val overlappingTags = graphWarnings.toList
       .mapFilter(warning =>
         warning match {
           case t: OverlappingTags => Some(t)
@@ -46,7 +58,8 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
     val template = html.warnings(
       singleTags,
       singleNotes,
-      overlappingTags
+      overlappingTags,
+      unresolvableLinks
     )
     Ok(template.body, Header("Content-Type", "text/html"))
   }

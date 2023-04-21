@@ -22,6 +22,8 @@ import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.graph.Network
 import mindmap.model.Zettelkasten
+import mindmap.model.parser.RepositoryWarning.instances._
+import mindmap.model.parser.RepositoryWarning
 import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.GraphWarning
 
@@ -42,7 +44,7 @@ object Grapher extends IOApp {
 
   def graph(
     config: ConfigurationAlgebra[IO]
-  ): IO[(Zettelkasten, Iterable[GraphWarning])] =
+  ): IO[(Zettelkasten, Iterable[GraphWarning], Iterable[RepositoryWarning])] =
     for {
       _ <- IO.unit
       implicit0(c: ConfigurationAlgebra[IO]) = config
@@ -55,7 +57,11 @@ object Grapher extends IOApp {
       )
       repoWarnings <- new RealRepositoryWarnings[IO]().warnings(repository)
       _ <- IO.shift *> logger.action("generate repository warnings")(
-        repoWarnings.toList.map(warning => logger.warn(warning)).sequence
+        repoWarnings.toList
+          .map(warning => {
+            logger.warn(warning.show)
+          })
+          .sequence
       )
       zettel <- IO.shift *> logger.action("parse Zettelkasten")(
         new MarkdownZettelkastenParser[IO]().parseZettelkasten(repository)
@@ -91,7 +97,7 @@ object Grapher extends IOApp {
           })
         })
       ).parSequence
-    } yield ((zettel, warnings))
+    } yield ((zettel, warnings, repoWarnings))
 
   def run(args: List[String]): IO[ExitCode] =
     for {
@@ -116,7 +122,11 @@ object Grapher extends IOApp {
       )
       repoWarnings <- new RealRepositoryWarnings[IO]().warnings(repository)
       _ <- IO.shift *> logger.action("generate repository warnings")(
-        repoWarnings.toList.map(warning => logger.warn(warning)).sequence
+        repoWarnings.toList
+          .map(warning => {
+            logger.warn(warning.show)
+          })
+          .sequence
       )
       zettel <- IO.shift *> logger.action("parse Zettelkasten")(
         new MarkdownZettelkastenParser[IO]().parseZettelkasten(repository)

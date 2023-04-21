@@ -1,7 +1,8 @@
 @(
   singleTags: List[mindmap.model.graph.SingleTag],
   singleNotes: List[mindmap.model.graph.SingleNote],
-  overlappingTags: List[mindmap.model.graph.OverlappingTags]
+  overlappingTags: List[mindmap.model.graph.OverlappingTags],
+  unresolvableLinks: Iterable[mindmap.model.parser.UnresolvableLink]
 )
 
 @main("Warnings"){
@@ -10,6 +11,15 @@
 } {
   <div class="w">
     <h1>Warnings</h1>
+    <h2>Unresolvable Links</h2>
+    @for(l <- unresolvableLinks) {
+      <li>
+        <a href="@{s"/notes/${l.note.title}"}">
+          @l.note.title
+        </a>
+        - link to @l.target
+      </li>
+    }
     <h2>Single Tags</h2>
     @for(t <- singleTags) {
       <li>
