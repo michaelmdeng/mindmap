@@ -6,6 +6,7 @@ import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.functorFilter._
+import cats.syntax.traverseFilter._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
@@ -39,13 +40,16 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
     (Map[Either[Entity, Cluster], Long], Map[Either[Entity, Cluster], Long])
   ] =
     for {
-      graphConfig <- ConfigurationAlgebra[F].graphConfiguration
-    } yield {
-      val clusterByTagNode = graph.nodes.toList
+      clusterThreshold <- ConfigurationAlgebra[F].clusterThreshold()
+      clusterableTags <- graph.nodes.toList
         .mapFilter(node => GraphNode.tagNode(node))
-        .filter(tagNode =>
-          !graphConfig.excludeClusterTags.contains(tagNode.tag)
+        .traverseFilter(tagNode =>
+          ConfigurationAlgebra[F]
+            .isIgnoreClusterTag(tagNode.tag)
+            .map(isIgnore => Option.when(!isIgnore)(tagNode))
         )
+    } yield {
+      val clusterByTagNode = clusterableTags
         .map(tagNode => (tagNode, tagNode.node.neighbors.size))
         .toMap
 
@@ -64,7 +68,7 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
               } yield (neighborNoteNode.note)
             })
 
-          if (clusterNotes.size >= graphConfig.clusterThreshold) {
+          if (clusterNotes.size >= clusterThreshold) {
             Some(Cluster(tagNode.tag, clusterNotes))
           } else {
             None
@@ -91,12 +95,11 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
 
   def network(graph: Graph[Entity, DiEdge]): F[Network] =
     for {
-      graphConfig <- ConfigurationAlgebra[F].graphConfiguration
+      clusterEnabled <- ConfigurationAlgebra[F].clusteringEnabled()
       t <- cluster(graph)
       idxByMember = t._1
       clusterIdxByMember = t._2
     } yield {
-      val clusterEnabled = graphConfig.clusterEnabled
       val networkNodes = idxByMember.map {
         case (Left(e), idx) => {
           val isCluster = clusterIdxByMember.contains(Left(e))

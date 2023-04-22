@@ -26,18 +26,18 @@ class VimwikiCollectionParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
   *[_]
 ]: ConfigurationAlgebra[*[_]]]
     extends CollectionParserAlgebra[F] {
-  private val MAX_DEPTH: Int = 100
   private val logger: Logging[F] = new Logging(this.getClass())
 
   private def getFiles(): F[List[File]] = {
     for {
-      config <- ConfigurationAlgebra[F].collectionConfiguration
+      root <- ConfigurationAlgebra[F].root()
+      maxDepth <- ConfigurationAlgebra[F].maxDepth()
       files <- Resource
         .fromAutoCloseable(Effect[F].delay {
           Files
             .find(
-              config.root.toPath(),
-              config.depth,
+              root.toPath(),
+              maxDepth,
               (path, attr) => {
                 !Effect[F]
                   .toIO(ConfigurationAlgebra[F].isIgnoreFile(path).attempt)

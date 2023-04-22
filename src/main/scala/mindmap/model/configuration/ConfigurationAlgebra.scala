@@ -1,16 +1,9 @@
 package mindmap.model.configuration
 
-import java.io.File
-
-trait ConfigurationAlgebra[F[_]] extends IgnoreAlgebra[F] {
-  def collectionConfiguration: F[CollectionConfiguration]
-
-  def noteConfiguration: F[NoteConfiguration]
-
-  def repositoryConfiguration: F[RepositoryConfiguration]
-
-  def graphConfiguration: F[GraphConfiguration]
-}
+trait ConfigurationAlgebra[F[_]]
+    extends CollectionConfigurationAlgebra[F]
+    with RepositoryConfigurationAlgebra[F]
+    with GraphConfigurationAlgebra[F]
 
 object ConfigurationAlgebra {
   def apply[F[_]](

@@ -9,5 +9,5 @@ case class CollectionConfiguration(
 )
 
 object CollectionConfiguration {
-  val DEFAULT_MAX_DEPTH: Int = 5
+  final val DEFAULT_MAX_DEPTH: Int = 5
 }
