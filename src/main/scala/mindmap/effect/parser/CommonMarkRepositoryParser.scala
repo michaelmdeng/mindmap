@@ -1,6 +1,5 @@
 package mindmap.effect.parser
 
-import cats.MonadError
 import cats.Parallel
 import cats.effect.ContextShift
 import cats.effect.Effect
@@ -10,6 +9,7 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
+import cats.syntax.traverseFilter._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.Level
@@ -82,17 +82,27 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Paralle
     for {
       noteTags <- collection.notes
         .map(note => {
-          MonadError[F, Throwable].tuple2(
+          Effect[F].tuple2(
             note.pure[F],
-            logger.action(f"parse tags for note: ${note.title}", Level.DEBUG)(
-              parseTags(note.content)
-            )
+            for {
+              tags <- logger
+                .action(f"parse tags for note: ${note.title}", Level.DEBUG)(
+                  parseTags(note.content)
+                )
+              filteredTags <- tags.toList.traverseFilter(tag => {
+                for {
+                  isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
+                } yield {
+                  Option.when(!isIgnoreTag)(tag)
+                }
+              })
+            } yield (filteredTags.toSet)
           )
         })
         .parSequence
       noteLinks <- collection.notes
         .map(note => {
-          MonadError[F, Throwable]
+          Effect[F]
             .tuple2(
               note.pure[F],
               logger
@@ -102,16 +112,9 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Paralle
             )
         })
         .parSequence
-      config <- ConfigurationAlgebra[F].repositoryConfiguration
     } yield {
       Repository(
-        noteTags = noteTags.toMap.map {
-          case (note, tags) =>
-            (
-              note,
-              tags.filter(tag => !config.excludeTags.contains(tag))
-            )
-        },
+        noteTags = noteTags.toMap,
         noteLinks = noteLinks.toMap
       )
     }

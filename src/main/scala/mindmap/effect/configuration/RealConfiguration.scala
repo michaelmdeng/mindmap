@@ -2,8 +2,8 @@ package mindmap.effect.configuration
 
 import cats.effect.Effect
 import cats.syntax.applicative._
-import cats.syntax.functor._
 import cats.syntax.flatMap._
+import cats.syntax.functor._
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -11,24 +11,27 @@ import java.nio.file.PathMatcher
 import scala.io.Source
 
 import mindmap.effect.Logging
+import mindmap.model.Tag
 import mindmap.model.configuration.CollectionConfiguration
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.configuration.GraphConfiguration
-import mindmap.model.configuration.NoteConfiguration
 import mindmap.model.configuration.RepositoryConfiguration
 
 object RealConfiguration {
   private val IGNORE_FILE = ".mindmapignore"
   private val DEFAULT_FS = FileSystems.getDefault()
 
-  def apply[F[_]: Effect[*[_]]](root: String): ConfigurationAlgebra[F] =
+  def apply[F[_]: Effect[*[_]]](r: String): ConfigurationAlgebra[F] =
     new ConfigurationAlgebra[F] {
       private val logger: Logging[F] = new Logging(this.getClass())
       private val markdownFiles: PathMatcher =
-        DEFAULT_FS.getPathMatcher(f"glob:${root}/**.md")
-      private val rootPath: File = new File(root)
+        DEFAULT_FS.getPathMatcher(f"glob:${r}/**.md")
+      private val rootPath: File = new File(r)
       private val collectionPath: File = new File(rootPath, "wiki")
       private val notePath: File = new File(rootPath, "html")
+
+      def root(): F[File] = collectionConfiguration.map(_.root)
+      def maxDepth(): F[Int] = collectionConfiguration.map(_.depth)
 
       def isIgnoreFile(path: Path): F[Boolean] =
         for {
@@ -45,7 +48,7 @@ object RealConfiguration {
           !isMarkdown || isIgnore
         }
 
-      def collectionConfiguration: F[CollectionConfiguration] =
+      private def collectionConfiguration: F[CollectionConfiguration] =
         for {
           ignoreExists <- Effect[F].delay(
             new File(f"${collectionPath.getPath()}/${IGNORE_FILE}").exists()
@@ -66,13 +69,21 @@ object RealConfiguration {
           CollectionConfiguration(collectionPath, ignores = ignores)
         }
 
-      def noteConfiguration: F[NoteConfiguration] =
-        NoteConfiguration(notePath).pure[F]
+      def isIgnoreTag(tag: Tag): F[Boolean] =
+        for {
+          config <- RepositoryConfiguration.DEFAULT.pure[F]
+        } yield {
+          config.excludeTags.contains(tag)
+        }
 
-      def repositoryConfiguration: F[RepositoryConfiguration] =
-        RepositoryConfiguration.DEFAULT.pure[F]
-
-      def graphConfiguration: F[GraphConfiguration] =
+      private def graphConfiguration: F[GraphConfiguration] =
         GraphConfiguration.DEFAULT.pure[F]
+
+      def clusteringEnabled(): F[Boolean] =
+        graphConfiguration.map(_.clusterEnabled)
+      def clusterThreshold(): F[Int] =
+        graphConfiguration.map(_.clusterThreshold)
+      def isIgnoreClusterTag(tag: Tag): F[Boolean] =
+        graphConfiguration.map(_.excludeClusterTags.contains(tag))
     }
 }

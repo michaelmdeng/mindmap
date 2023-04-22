@@ -10,6 +10,7 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
+import cats.syntax.traverseFilter._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.Level
@@ -109,11 +110,24 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
     for {
       noteTags <- collection.notes
         .map(note => {
-          MonadError[F, Throwable].tuple2(
+          Effect[F].tuple2(
             note.pure[F],
-            logger.action(f"parse tags for note: ${note.title}", Level.DEBUG)(
-              parseTags(note.content)
-            )
+            for {
+              tags <- logger
+                .action(f"parse tags for note: ${note.title}", Level.DEBUG)(
+                  parseTags(note.content)
+                )
+              filteredTags <- tags.toList.traverseFilter(tag => {
+                for {
+                  isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
+                } yield {
+                  isIgnoreTag match {
+                    case true => None
+                    case false => Some(tag)
+                  }
+                }
+              })
+            } yield (filteredTags.toSet)
           )
         })
         .parSequence
@@ -129,16 +143,9 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
             )
         })
         .parSequence
-      config <- ConfigurationAlgebra[F].repositoryConfiguration
     } yield {
       Repository(
-        noteTags = noteTags.toMap.map {
-          case (note, tags) =>
-            (
-              note,
-              tags.filter(tag => !config.excludeTags.contains(tag))
-            )
-        },
+        noteTags = noteTags.toMap,
         noteLinks = noteLinks.toMap
       )
     }
