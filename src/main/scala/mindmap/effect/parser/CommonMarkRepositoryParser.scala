@@ -9,7 +9,6 @@ import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.parallel._
-import cats.syntax.traverseFilter._
 import java.net.URI
 import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.Level
@@ -20,9 +19,9 @@ import org.commonmark.parser.Parser
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import tofu.logging.Logging
+import tofu.syntax.logging._
 
-import mindmap.effect.Logging
-import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
 import mindmap.model.Repository
 import mindmap.model.Tag
@@ -34,8 +33,11 @@ import mindmap.model.parser.markdown.TagBlock
 
 class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
   *[_]
-]: ConfigurationAlgebra[*[_]]]
+]: ConfigurationAlgebra[*[_]]: Logging.Make]
     extends RepositoryParserAlgebra[F] {
+  private implicit val log: Logging[F] =
+    Logging.Make[F].forService[CommonMarkRepositoryParser[F]]
+
   private class LinkCollector extends AbstractVisitor {
     var links: List[UnresolvedLink] = List()
 
@@ -44,12 +46,11 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Paralle
     }
   }
 
-  private implicit val logger = new Logging(this.getClass())
-  private val blockParsers = new BlockParsers() with LoggingParsers {}
+  private val blockParsers = new BlockParsers()
 
   private def parseTags(content: String): F[Set[Tag]] =
     for {
-      result <- blockParsers.parseAndLog(blockParsers.tags, content, "tags")
+      result <- blockParsers.parse(blockParsers.tags, content).pure[F]
     } yield {
       result match {
         case blockParsers.Success(b, _) => b.tags.toSet
@@ -80,38 +81,36 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Paralle
 
   def parseRepository(collection: Collection): F[Repository] =
     for {
-      noteTags <- collection.notes
-        .map(note => {
-          Effect[F].tuple2(
-            note.pure[F],
-            for {
-              tags <- logger
-                .action(f"parse tags for note: ${note.title}", Level.DEBUG)(
-                  parseTags(note.content)
-                )
-              filteredTags <- tags.toList.traverseFilter(tag => {
-                for {
-                  isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
-                } yield {
-                  Option.when(!isIgnoreTag)(tag)
-                }
-              })
-            } yield (filteredTags.toSet)
-          )
-        })
-        .parSequence
-      noteLinks <- collection.notes
-        .map(note => {
-          Effect[F]
-            .tuple2(
+      (noteTags, noteLinks) <- (
+        collection.notes
+          .map(note => {
+            Effect[F].tuple2(
               note.pure[F],
-              logger
-                .action(f"parse links for note: ${note.title}", Level.DEBUG)(
-                  parseLinks(note.content)
-                )
+              for {
+                tags <- debug"parse tags for note: ${note.title}" >>
+                  parseTags(note.content)
+                filteredTags <- tags.toList.parTraverseFilter(tag => {
+                  for {
+                    isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
+                  } yield {
+                    Option.when(!isIgnoreTag)(tag)
+                  }
+                })
+              } yield (filteredTags.toSet)
             )
-        })
-        .parSequence
+          })
+          .parSequence,
+        collection.notes
+          .map(note => {
+            Effect[F]
+              .tuple2(
+                note.pure[F],
+                debug"parse links for note: ${note.title}" >>
+                  parseLinks(note.content)
+              )
+          })
+          .parSequence
+      ).parMapN((tags, links) => (tags, links))
     } yield {
       Repository(
         noteTags = noteTags.toMap,

@@ -16,23 +16,24 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.logging.log4j.Level
 import scala.concurrent.ExecutionContext
 import scala.io.Source
+import tofu.logging.Logging
+import tofu.syntax.logging._
 
-import mindmap.effect.Logging
 import mindmap.model.Note
 import mindmap.model.parser.NoteParserAlgebra
 
-class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]](file: File)
-    extends NoteParserAlgebra[F] {
-  private val logger: Logging[F] = new Logging(this.getClass())
+class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Logging.Make](
+  file: File
+) extends NoteParserAlgebra[F] {
+  private implicit val log: Logging[F] =
+    Logging.Make[F].forService[FileNoteParser[F]]
 
   def content(): F[String] =
     for {
-      lines <- logger.action(f"read file: ${file}")(
-        Effect[F].delay(Source.fromFile(file).getLines())
-      )
-      c <- ContextShift[F].shift *> logger.action(
-        f"generate content for ${file}"
-      )(Effect[F].delay(lines.reduce(_ + "\n" + _)))
+      lines <- debug"read file: ${file.toString()}" >>
+        Effect[F].delay(Source.fromFile(file).getLines()) <* ContextShift[F].shift
+      c <- debug"generate file content: ${file.toString()}" >>
+        Effect[F].delay(lines.reduce(_ + "\n" + _)) <* ContextShift[F].shift
     } yield (c)
 
   def createDate(): F[LocalDateTime] = Effect[F].delay {
@@ -59,17 +60,19 @@ class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]](file: File)
   }
 
   def parseNote(): F[Note] =
-    logger.action(f"parse note: ${file}")(for {
-      c <- content()
-      cd <- ContextShift[F].shift *> createDate()
-      md <- ContextShift[F].shift *> modifiedDate()
-      i <- ContextShift[F].shift *> title()
+    for {
+      - <- info"parse note: ${file.toString()}"
+      c <- content() <* ContextShift[F].shift
+      cd <- createDate()
+      md <- modifiedDate()
+      i <- title()
     } yield {
       Note(
         content = c,
-        createDate = cd,
+        createdDate = cd,
         modifiedDate = md,
-        title = i
+        title = i,
+        path = file.toPath()
       )
-    })
+    }
 }

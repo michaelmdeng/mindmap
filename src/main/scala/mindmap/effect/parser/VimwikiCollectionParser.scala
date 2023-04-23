@@ -15,8 +15,9 @@ import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import org.apache.logging.log4j.Level
 import scala.jdk.StreamConverters._
+import tofu.logging.Logging
+import tofu.syntax.logging._
 
-import mindmap.effect.Logging
 import mindmap.effect.parser.FileNoteParser
 import mindmap.model.Collection
 import mindmap.model.configuration.ConfigurationAlgebra
@@ -24,15 +25,16 @@ import mindmap.model.parser.CollectionParserAlgebra
 
 class VimwikiCollectionParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
   *[_]
-]: ConfigurationAlgebra[*[_]]]
+]: ConfigurationAlgebra[*[_]]: Logging.Make]
     extends CollectionParserAlgebra[F] {
-  private val logger: Logging[F] = new Logging(this.getClass())
+  private implicit val log: Logging[F] =
+    Logging.Make[F].forService[FileNoteParser[F]]
 
-  private def getFiles(): F[List[File]] = {
+  private def useFiles[A](f: File => F[A]): F[LazyList[A]] = {
     for {
       root <- ConfigurationAlgebra[F].root()
       maxDepth <- ConfigurationAlgebra[F].maxDepth()
-      files <- Resource
+      out <- Resource
         .fromAutoCloseable(Effect[F].delay {
           Files
             .find(
@@ -49,20 +51,14 @@ class VimwikiCollectionParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
             .filter(Files.isRegularFile(_))
             .map(_.toFile())
         })
-        .use(fileStream => fileStream.toScala(List).pure[F])
-    } yield (files)
+        .use(fileStream => fileStream.map(f(_)).toScala(LazyList).parSequence)
+    } yield (out)
   }
 
   def parseCollection(config: ConfigurationAlgebra[F]): F[Collection] =
     for {
-      files <- logger.action("find files")(getFiles())
-      notes <- files
-        .map(file => {
-          new FileNoteParser(file)
-            .parseNote()
-            .map(List(_))
-            .handleError(e => List())
-        })
-        .parFlatSequence
-    } yield (Collection(notes))
+      notes <- info"traverse files" >> useFiles(file => {
+        new FileNoteParser(file).parseNote()
+      })
+    } yield (Collection(notes.toList))
 }

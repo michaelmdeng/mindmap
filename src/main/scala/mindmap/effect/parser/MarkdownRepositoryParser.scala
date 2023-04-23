@@ -18,8 +18,6 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import mindmap.effect.Logging
-import mindmap.effect.parser.LoggingParsers
 import mindmap.model.Collection
 import mindmap.model.Repository
 import mindmap.model.Tag
@@ -38,14 +36,12 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
   *[_]
 ]: ConfigurationAlgebra[*[_]]]
     extends RepositoryParserAlgebra[F] {
-  private implicit val logger = new Logging(this.getClass())
-
-  private val blockParsers = new BlockParsers() with LoggingParsers {}
-  private val linkParsers = new LinkParsers() with LoggingParsers {}
+  private val blockParsers = new BlockParsers()
+  private val linkParsers = new LinkParsers()
 
   private def parseParagraphs(content: String): F[List[Paragraph]] =
     for {
-      result <- blockParsers.parseAndLog(blockParsers.blocks, content, "blocks")
+      result <- blockParsers.parse(blockParsers.blocks, content).pure[F]
       paragraphs <- result match {
         case blockParsers.Success(bs, _) => blockParsers.mergeBlocks(bs).pure[F]
         case e: blockParsers.NoSuccess =>
@@ -82,7 +78,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
 
   private def parseParagraphLinks(paragraph: String): F[List[UnresolvedLink]] =
     for {
-      result <- linkParsers.parseAndLog(linkParsers.links, paragraph, "links")
+      result <- linkParsers.parse(linkParsers.links, paragraph).pure[F]
       links <- result match {
         case linkParsers.Success(ls, _) => ls.pure[F]
         case e: linkParsers.NoSuccess =>
@@ -113,10 +109,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
           Effect[F].tuple2(
             note.pure[F],
             for {
-              tags <- logger
-                .action(f"parse tags for note: ${note.title}", Level.DEBUG)(
-                  parseTags(note.content)
-                )
+              tags <- parseTags(note.content)
               filteredTags <- tags.toList.traverseFilter(tag => {
                 for {
                   isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
@@ -134,13 +127,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
       noteLinks <- collection.notes
         .map(note => {
           MonadError[F, Throwable]
-            .tuple2(
-              note.pure[F],
-              logger
-                .action(f"parse links for note: ${note.title}", Level.DEBUG)(
-                  parseLinks(note.content)
-                )
-            )
+            .tuple2(note.pure[F], parseLinks(note.content))
         })
         .parSequence
     } yield {

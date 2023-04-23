@@ -1,12 +1,13 @@
 package mindmap.effect.graph
 
 import cats.Monad
+import cats.Parallel
 import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.functorFilter._
-import cats.syntax.traverseFilter._
+import cats.syntax.parallel._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
@@ -24,7 +25,9 @@ import mindmap.model.graph.NetworkEdge.NetworkEdgeOps
 import mindmap.model.graph.NetworkNode
 import mindmap.model.graph.NetworkNode.NetworkNodeOps
 
-class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
+class GraphGenerator[F[+_]: Monad[*[_]]: Parallel[*[_]]: ConfigurationAlgebra[
+  *[_]
+]](
   zettelkasten: Zettelkasten
 ) extends GraphAlgebra[F] {
   def graph(): F[Graph[Entity, DiEdge]] = {
@@ -43,7 +46,7 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
       clusterThreshold <- ConfigurationAlgebra[F].clusterThreshold()
       clusterableTags <- graph.nodes.toList
         .mapFilter(node => GraphNode.tagNode(node))
-        .traverseFilter(tagNode =>
+        .parTraverseFilter(tagNode =>
           ConfigurationAlgebra[F]
             .isIgnoreClusterTag(tagNode.tag)
             .map(isIgnore => Option.when(!isIgnore)(tagNode))
@@ -56,17 +59,9 @@ class GraphGenerator[F[+_]: Monad[*[_]]: ConfigurationAlgebra[*[_]]](
       val clusters = clusterByTagNode.toList.mapFilter {
         case (tagNode, size) => {
           val clusterNotes = tagNode.node.neighbors.toList
-            .mapFilter(neighborNode => {
-              for {
-                neighborNoteNode <- GraphNode.noteNode(neighborNode)
-                isCluster <- neighborNoteNode.node.neighbors.toList
-                  .mapFilter(noteNeighbor => GraphNode.tagNode(noteNeighbor))
-                  .maxByOption(neighborTagNode => {
-                    clusterByTagNode.get(neighborTagNode).getOrElse(-1)
-                  })
-                  .filter(_ == tagNode)
-              } yield (neighborNoteNode.note)
-            })
+            .mapFilter(neighborNode =>
+              GraphNode.noteNode(neighborNode).map(_.note)
+            )
 
           if (clusterNotes.size >= clusterThreshold) {
             Some(Cluster(tagNode.tag, clusterNotes))

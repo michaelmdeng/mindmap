@@ -1,6 +1,7 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 val http4sVersion = "0.22.14"
+val tofuVersion = "0.11.1"
 
 lazy val commonSettings = Seq(
   name := "mindmap",
@@ -20,7 +21,9 @@ lazy val commonSettings = Seq(
     "org.scala-graph" %% "graph-core" % "1.13.2",
     "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
     "org.typelevel" %% "cats-core" % "2.0.0",
-    "org.typelevel" %% "cats-effect" % "2.1.2"
+    "org.typelevel" %% "cats-effect" % "2.1.2",
+    "tf.tofu" %% "tofu-logging" % tofuVersion,
+    "tf.tofu" %% "tofu-logging-derivation" % tofuVersion
   ),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.0" % "test"

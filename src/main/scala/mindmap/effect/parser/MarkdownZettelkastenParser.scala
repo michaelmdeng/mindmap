@@ -15,12 +15,7 @@ class MarkdownZettelkastenParser[F[_]: Applicative[*[_]]]
     extends ZettelkastenParserAlgebra[F] {
   def parseZettelkasten(repository: Repository): F[Zettelkasten] = {
     val notes = repository.noteTags.keySet.toList
-
-    val tags = repository.noteTags.foldLeft(Set[Tag]())((acc, t) => {
-      t match {
-        case (_, tags) => acc ++ tags
-      }
-    })
+    val tags = repository.noteTags.values.reduce(_ ++ _)
 
     val tagLinks = repository.noteTags.flatMap {
       case (note, tags) => tags.map(ResolvedLink(_, note))

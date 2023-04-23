@@ -4,11 +4,17 @@ import cats.syntax.applicative._
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
-
-import mindmap.effect.Logging
+import tofu.logging.Logging
+import tofu.syntax.logging._
+import tofu.Delay
 
 object Main extends IOApp {
-  private implicit val logger: Logging[IO] = new Logging(Main.getClass())
+  private implicit val ioDelay: Delay[IO] = new Delay[IO] {
+    def delay[A](fa: => A): IO[A] = IO.delay(fa)
+  }
+  private implicit val makeLogging: Logging.Make[IO] = Logging.Make.plain[IO]
+  private implicit val log: Logging[IO] =
+    Logging.Make[IO].forService[IOApp]
 
   def run(args: List[String]): IO[ExitCode] = {
     // TODO better arg parsing
@@ -20,7 +26,7 @@ object Main extends IOApp {
         Server.run(args.tail)
       case default =>
         for {
-          _ <- logger.error(f"Could not find class with name: $className")
+          _ <- error"Could not find class with name: $className"
         } yield {
           ExitCode.Error
         }

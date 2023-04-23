@@ -9,8 +9,9 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import scala.io.Source
+import tofu.logging.Logging
+import tofu.syntax.logging._
 
-import mindmap.effect.Logging
 import mindmap.model.Tag
 import mindmap.model.configuration.CollectionConfiguration
 import mindmap.model.configuration.ConfigurationAlgebra
@@ -21,9 +22,13 @@ object RealConfiguration {
   private val IGNORE_FILE = ".mindmapignore"
   private val DEFAULT_FS = FileSystems.getDefault()
 
-  def apply[F[_]: Effect[*[_]]](r: String): ConfigurationAlgebra[F] =
+  def apply[F[_]: Effect[*[_]]: Logging.Make](
+    r: String
+  ): ConfigurationAlgebra[F] =
     new ConfigurationAlgebra[F] {
-      private val logger: Logging[F] = new Logging(this.getClass())
+      private implicit val log: Logging[F] =
+        Logging.Make[F].forService[ConfigurationAlgebra[F]]
+
       private val markdownFiles: PathMatcher =
         DEFAULT_FS.getPathMatcher(f"glob:${r}/**.md")
       private val rootPath: File = new File(r)
@@ -56,14 +61,13 @@ object RealConfiguration {
           ignores <- if (!ignoreExists) {
             Effect[F].pure(List())
           } else {
-            logger.action("read ignore file")(
+            info"read ignore file" >>
               Effect[F].delay(
                 Source
                   .fromFile(f"${collectionPath.getPath()}/${IGNORE_FILE}")
                   .getLines()
                   .toList
               )
-            )
           }
         } yield {
           CollectionConfiguration(collectionPath, ignores = ignores)
