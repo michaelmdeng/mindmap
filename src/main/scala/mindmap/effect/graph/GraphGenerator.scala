@@ -71,11 +71,10 @@ class GraphGenerator[F[+_]: Monad[*[_]]: Parallel[*[_]]: ConfigurationAlgebra[
         }
       }
 
-      val idxByMember = (graph.nodes.zipWithIndex.map {
-        case (node, idx) => (Left(node.toOuter), idx.toLong)
-      } ++ clusters.zipWithIndex.map {
-        case (cluster, idx) =>
-          (Right(cluster), (idx + graph.nodes.size).toLong)
+      val idxByMember = (graph.nodes.zipWithIndex.map { case (node, idx) =>
+        (Left(node.toOuter), idx.toLong)
+      } ++ clusters.zipWithIndex.map { case (cluster, idx) =>
+        (Right(cluster), (idx + graph.nodes.size).toLong)
       }).toMap
 
       val clusterIdxByMember: Map[Either[Entity, Cluster], Long] = clusters
@@ -129,8 +128,8 @@ class GraphGenerator[F[+_]: Monad[*[_]]: Parallel[*[_]]: ConfigurationAlgebra[
             }
           }
         })
-        .map {
-          case (_, v) => v.head
+        .map { case (_, v) =>
+          v.head
         }
         .flatMap(graphEdge => {
           val edge = (graphEdge.from.toOuter, graphEdge.to.toOuter) match {

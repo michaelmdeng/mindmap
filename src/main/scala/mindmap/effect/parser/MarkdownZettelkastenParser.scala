@@ -17,8 +17,8 @@ class MarkdownZettelkastenParser[F[_]: Applicative[*[_]]]
     val notes = repository.noteTags.keySet.toList
     val tags = repository.noteTags.values.reduce(_ ++ _)
 
-    val tagLinks = repository.noteTags.flatMap {
-      case (note, tags) => tags.map(ResolvedLink(_, note))
+    val tagLinks = repository.noteTags.flatMap { case (note, tags) =>
+      tags.map(ResolvedLink(_, note))
     }
     val noteLinks = repository.noteLinks.flatMap {
       case (note, unresolvedLinks) => {

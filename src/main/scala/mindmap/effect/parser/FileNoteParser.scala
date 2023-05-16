@@ -31,7 +31,8 @@ class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Logging.Make](
   def content(): F[String] =
     for {
       lines <- debug"read file: ${file.toString()}" >>
-        Effect[F].delay(Source.fromFile(file).getLines()) <* ContextShift[F].shift
+        Effect[F]
+          .delay(Source.fromFile(file).getLines()) <* ContextShift[F].shift
       c <- debug"generate file content: ${file.toString()}" >>
         Effect[F].delay(lines.reduce(_ + "\n" + _)) <* ContextShift[F].shift
     } yield (c)

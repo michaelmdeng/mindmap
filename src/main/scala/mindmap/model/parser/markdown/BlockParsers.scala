@@ -24,8 +24,8 @@ class BlockParsers extends SharedParsers {
       _ <- optWhitespace
       text <- chainl1(
         regex("[^#\t \n]+".r),
-        optWhitespace.map(space => {
-          (left: String, right: String) => left + space + right
+        optWhitespace.map(space => { (left: String, right: String) =>
+          left + space + right
         })
       )
       _ <- optWhitespace

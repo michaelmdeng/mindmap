@@ -77,9 +77,11 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
         })
 
         connectedTags.toList.mapFilter(connectedTag => {
-          if (connectedNotes
+          if (
+            connectedNotes
               .filter(note => !connectedTag.neighbors.contains(note))
-              .isEmpty) {
+              .isEmpty
+          ) {
             val overlappedTag = connectedTag.toOuter.asInstanceOf[Tag]
             Some(
               OverlappingTags(tag, overlappedTag)

@@ -6,7 +6,6 @@ import cats.effect.IOApp
 import cats.effect.Resource
 import cats.implicits._
 import java.io.PrintWriter
-import org.apache.logging.log4j.Level
 import org.json4s.NoTypeHints
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
@@ -22,7 +21,6 @@ import mindmap.effect.parser.MarkdownZettelkastenParser
 import mindmap.effect.parser.RealRepositoryWarnings
 import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
-import mindmap.model.graph.Network
 import mindmap.model.Zettelkasten
 import mindmap.model.parser.RepositoryWarning.instances._
 import mindmap.model.parser.RepositoryWarning
@@ -97,16 +95,18 @@ object Grapher extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
-      rootPath <- if (args.size > 0) {
-        args(0).pure[IO]
-      } else {
-        "/home/mdeng/MyDrive/vimwiki".pure[IO]
-      }
-      networkPath <- if (args.size > 1) {
-        args(1).pure[IO]
-      } else {
-        "public/graph".pure[IO]
-      }
+      rootPath <-
+        if (args.size > 0) {
+          args(0).pure[IO]
+        } else {
+          "/home/mdeng/MyDrive/vimwiki".pure[IO]
+        }
+      networkPath <-
+        if (args.size > 1) {
+          args(1).pure[IO]
+        } else {
+          "public/graph".pure[IO]
+        }
       _ <- graph(RealConfiguration[IO](rootPath))
     } yield (ExitCode.Success)
 }

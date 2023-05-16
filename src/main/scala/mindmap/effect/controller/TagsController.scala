@@ -30,7 +30,7 @@ class TagsController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
     } yield (resp)
   }
 
-  def routes(): HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root / name => tag(name)
+  def routes(): HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / name =>
+    tag(name)
   }
 }

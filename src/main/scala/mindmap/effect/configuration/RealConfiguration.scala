@@ -58,17 +58,18 @@ object RealConfiguration {
           ignoreExists <- Effect[F].delay(
             new File(f"${collectionPath.getPath()}/${IGNORE_FILE}").exists()
           )
-          ignores <- if (!ignoreExists) {
-            Effect[F].pure(List())
-          } else {
-            info"read ignore file" >>
-              Effect[F].delay(
-                Source
-                  .fromFile(f"${collectionPath.getPath()}/${IGNORE_FILE}")
-                  .getLines()
-                  .toList
-              )
-          }
+          ignores <-
+            if (!ignoreExists) {
+              Effect[F].pure(List())
+            } else {
+              info"read ignore file" >>
+                Effect[F].delay(
+                  Source
+                    .fromFile(f"${collectionPath.getPath()}/${IGNORE_FILE}")
+                    .getLines()
+                    .toList
+                )
+            }
         } yield {
           CollectionConfiguration(collectionPath, ignores = ignores)
         }
