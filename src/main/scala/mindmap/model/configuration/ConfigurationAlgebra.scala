@@ -6,7 +6,7 @@ trait ConfigurationAlgebra[F[_]]
     with GraphConfigurationAlgebra[F]
 
 object ConfigurationAlgebra {
-  def apply[F[_]](
-    implicit instance: ConfigurationAlgebra[F]
+  def apply[F[_]](implicit
+    instance: ConfigurationAlgebra[F]
   ): ConfigurationAlgebra[F] = instance
 }

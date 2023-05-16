@@ -31,7 +31,9 @@ import mindmap.model.parser.RepositoryParserAlgebra
 import mindmap.model.parser.markdown.BlockParsers
 import mindmap.model.parser.markdown.TagBlock
 
-class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
+class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[
+  *[_]
+]: Parallel[
   *[_]
 ]: ConfigurationAlgebra[*[_]]: Logging.Make]
     extends RepositoryParserAlgebra[F] {

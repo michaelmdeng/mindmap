@@ -1,13 +1,16 @@
 package mindmap
 
-import cats.effect._
+import cats.effect.Blocker
+import cats.effect.ExitCode
+import cats.effect.IO
+import cats.effect.IOApp
+import cats.effect.Resource
 import cats.implicits._
-import java.io.File
-import org.http4s._
-import org.http4s.dsl.io._
+import org.http4s.HttpRoutes
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
-import org.http4s.server._
+import org.http4s.server.Router
+import org.http4s.server.Server
 import org.http4s.server.staticcontent._
 import org.http4s.syntax.all._
 import tofu.logging.Logging
@@ -50,11 +53,15 @@ object Server extends IOApp {
       zettelRepo = new MemoryZettelkastenRepository[IO](collection)
       _ <- Resource.eval(info"initialized zettelkasten service")
       (notes, tags, warnings) <- (
-        Resource.eval(new NotesController[IO](zettelRepo).routes().pure[IO]) <* Resource
+        Resource.eval(
+          new NotesController[IO](zettelRepo).routes().pure[IO]
+        ) <* Resource
           .eval(
             info"initialized notes controller"
           ),
-        Resource.eval(new TagsController[IO](zettelRepo).routes().pure[IO]) <* Resource
+        Resource.eval(
+          new TagsController[IO](zettelRepo).routes().pure[IO]
+        ) <* Resource
           .eval(
             info"initialized tags controller"
           ),
@@ -94,11 +101,12 @@ object Server extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {
     for {
-      path <- if (args.size > 0) {
-        args(0).pure[IO]
-      } else {
-        "/home/mdeng/MyDrive/vimwiki".pure[IO]
-      }
+      path <-
+        if (args.size > 0) {
+          args(0).pure[IO]
+        } else {
+          "/home/mdeng/MyDrive/vimwiki".pure[IO]
+        }
       config = RealConfiguration[IO](path)
       _ <- createServer(config)
         .use(_ => info"Initialized server" *> IO.never)

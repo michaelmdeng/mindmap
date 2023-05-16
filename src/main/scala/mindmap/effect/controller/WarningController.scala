@@ -64,7 +64,7 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
     Ok(template.body, Header("Content-Type", "text/html"))
   }
 
-  def routes(): HttpRoutes[F] = HttpRoutes.of[F] {
-    case GET -> Root => get()
+  def routes(): HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root =>
+    get()
   }
 }
