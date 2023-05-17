@@ -16,7 +16,7 @@ jobs:
         distribution: temurin
         java-version: 17
     - name: Format code
-      run: sbt ";compile;scalafmt;test:compile;test:scalafmt" && git diff --quiet
+      run: sbt ";compile;scalafmtAll;test:compile;test:scalafmtAll" && git diff --quiet
     - name: Generate pom.xml
       run: sbt "makePom" && mv -f target/mindmap-0.1.0-SNAPSHOT.pom pom.xml && git diff --quiet
     - name: Run tests

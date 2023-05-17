@@ -23,6 +23,7 @@ import mindmap.effect.controller.TagsController
 import mindmap.effect.controller.WarningController
 import mindmap.effect.zettelkasten.MemoryZettelkastenRepository
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.configuration.ServerArgs
 
 object Server extends IOApp {
   private implicit val ioDelay: Delay[IO] = new Delay[IO] {
@@ -101,12 +102,9 @@ object Server extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] = {
     for {
-      path <-
-        if (args.size > 0) {
-          args(0).pure[IO]
-        } else {
-          "/home/mdeng/MyDrive/vimwiki".pure[IO]
-        }
+      path <- IO.fromOption(ServerArgs(args).path.toOption) {
+        new Exception("Invalid vimwiki path")
+      }
       config = RealConfiguration[IO](path)
       _ <- createServer(config)
         .use(_ => info"Initialized server" *> IO.never)
