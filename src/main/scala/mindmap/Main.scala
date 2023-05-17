@@ -1,11 +1,14 @@
 package mindmap
 
+import cats.syntax.applicative._
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.effect.IOApp
 import tofu.logging.Logging
 import tofu.syntax.logging._
 import tofu.Delay
+
+import mindmap.model.configuration.MainArgs
 
 object Main extends IOApp {
   private implicit val ioDelay: Delay[IO] = new Delay[IO] {
@@ -16,19 +19,20 @@ object Main extends IOApp {
     Logging.Make[IO].forService[IOApp]
 
   def run(args: List[String]): IO[ExitCode] = {
-    // TODO better arg parsing
-    val className: String = args(0)
-    className match {
-      case n if n == Grapher.getClass().getName().split('$').head =>
-        Grapher.run(args.tail)
-      case n if n == Server.getClass().getName().split('$').head =>
-        Server.run(args.tail)
-      case default =>
-        for {
-          _ <- error"Could not find class with name: $className"
-        } yield {
-          ExitCode.Error
-        }
-    }
+    val parsed = MainArgs(args)
+    for {
+      className <- IO.fromOption(parsed.clazz.toOption) {
+        new Exception("Invalid class name")
+      }
+      remaining <- parsed.remaining().pure[IO]
+      code <- className match {
+        case n if n == Grapher.getClass().getName().split('$').head =>
+          Grapher.run(args.tail)
+        case n if n == Server.getClass().getName().split('$').head =>
+          Server.run(args.tail)
+        case default =>
+          error"Could not find class with name: $className".as(ExitCode.Error)
+      }
+    } yield (code)
   }
 }

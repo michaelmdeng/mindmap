@@ -16,10 +16,10 @@ FROM eclipse-temurin:17 AS server
 WORKDIR /app
 COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
 COPY public /app/public
-ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "mindmap.Server", "/data"]
+ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "--class", "mindmap.Server", "--", "--path", "/data"]
 
 FROM eclipse-temurin:17 AS grapher
 WORKDIR /app
 COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
 COPY public /app/public
-ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "mindmap.Grapher", "/data", "/generated"]
+ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "--class", "mindmap.Grapher", "--", "--collection-path", "/data", "--network-path", "/generated"]

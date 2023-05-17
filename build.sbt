@@ -18,15 +18,16 @@ lazy val commonSettings = Seq(
     "org.http4s" %% "http4s-ember-client" % http4sVersion,
     "org.http4s" %% "http4s-ember-server" % http4sVersion,
     "org.json4s" %% "json4s-native" % "3.7.0-M2",
+    "org.rogach" %% "scallop" % "4.1.0",
     "org.scala-graph" %% "graph-core" % "1.13.2",
     "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
     "org.typelevel" %% "cats-core" % "2.0.0",
     "org.typelevel" %% "cats-effect" % "2.1.2",
     "tf.tofu" %% "tofu-logging" % tofuVersion,
-    "tf.tofu" %% "tofu-logging-derivation" % tofuVersion
+    "tf.tofu" %% "tofu-logging-derivation" % tofuVersion,
   ),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.2.0" % "test"
+    "org.scalatest" %% "scalatest" % "3.2.16" % "test"
   ),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(

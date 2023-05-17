@@ -21,6 +21,7 @@ import mindmap.effect.parser.MarkdownZettelkastenParser
 import mindmap.effect.parser.RealRepositoryWarnings
 import mindmap.effect.parser.VimwikiCollectionParser
 import mindmap.model.configuration.ConfigurationAlgebra
+import mindmap.model.configuration.GrapherArgs
 import mindmap.model.Zettelkasten
 import mindmap.model.parser.RepositoryWarning.instances._
 import mindmap.model.parser.RepositoryWarning
@@ -93,20 +94,16 @@ object Grapher extends IOApp {
       ).parSequence
     } yield ((zettel, warnings, repoWarnings))
 
-  def run(args: List[String]): IO[ExitCode] =
+  def run(args: List[String]): IO[ExitCode] = {
+    val parsed = GrapherArgs(args)
     for {
-      rootPath <-
-        if (args.size > 0) {
-          args(0).pure[IO]
-        } else {
-          "/home/mdeng/MyDrive/vimwiki".pure[IO]
-        }
-      networkPath <-
-        if (args.size > 1) {
-          args(1).pure[IO]
-        } else {
-          "public/graph".pure[IO]
-        }
+      rootPath <- IO.fromOption(parsed.collectionPath.toOption) {
+        new Exception("Invalid vimwiki path")
+      }
+      networkPath <- IO.fromOption(parsed.networkPath.toOption) {
+        new Exception("Invalid network path")
+      }
       _ <- graph(RealConfiguration[IO](rootPath))
     } yield (ExitCode.Success)
+  }
 }
