@@ -2,7 +2,7 @@ package mindmap.model.configuration
 
 import org.scalatest.funspec.AnyFunSpec
 
-class MainArgsTest extends AnyFunSpec {
+class MainArgsSpec extends AnyFunSpec {
   describe("MainArgs") {
     it("should parse Server") {
       val args =
