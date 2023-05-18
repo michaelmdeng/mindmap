@@ -27,9 +27,9 @@ object Main extends IOApp {
       remaining <- parsed.remaining().pure[IO]
       code <- className match {
         case n if n == Grapher.getClass().getName().split('$').head =>
-          Grapher.run(args.tail)
+          Grapher.run(remaining)
         case n if n == Server.getClass().getName().split('$').head =>
-          Server.run(args.tail)
+          Server.run(remaining)
         case default =>
           error"Could not find class with name: $className".as(ExitCode.Error)
       }
