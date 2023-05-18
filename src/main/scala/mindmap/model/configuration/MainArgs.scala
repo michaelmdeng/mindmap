@@ -7,7 +7,7 @@ class MainArgs(args: List[String]) extends ScallopConf(args) {
     name = "class",
     required = true,
     validate = (s) => {
-      s == "Server" || s == "Grapher"
+      s == "mindmap.Server" || s == "mindmap.Grapher"
     }
   )
 

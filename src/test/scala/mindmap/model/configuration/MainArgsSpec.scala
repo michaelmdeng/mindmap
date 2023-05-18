@@ -6,9 +6,15 @@ class MainArgsSpec extends AnyFunSpec {
   describe("MainArgs") {
     it("should parse Server") {
       val args =
-        List("--class", "Server", "--", "--path", "/home/mdeng/MyDrive/vimwiki")
+        List(
+          "--class",
+          "mindmap.Server",
+          "--",
+          "--path",
+          "/home/mdeng/MyDrive/vimwiki"
+        )
       val mainArgs = MainArgs(args)
-      assert(mainArgs.clazz() == "Server")
+      assert(mainArgs.clazz() == "mindmap.Server")
       assert(
         mainArgs.remaining() == List("--path", "/home/mdeng/MyDrive/vimwiki")
       )
@@ -18,7 +24,7 @@ class MainArgsSpec extends AnyFunSpec {
       val args =
         List(
           "--class",
-          "Grapher",
+          "mindmap.Grapher",
           "--",
           "--collection-path",
           "/home/mdeng/MyDrive/vimwiki",
@@ -26,7 +32,7 @@ class MainArgsSpec extends AnyFunSpec {
           "public/graph"
         )
       val mainArgs = MainArgs(args)
-      assert(mainArgs.clazz() == "Grapher")
+      assert(mainArgs.clazz() == "mindmap.Grapher")
       assert(
         mainArgs.remaining() == List(
           "--collection-path",
