@@ -27,6 +27,7 @@ import mindmap.model.parser.RepositoryWarning.instances._
 import mindmap.model.parser.RepositoryWarning
 import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.GraphWarning
+import mindmap.model.graph.Network
 
 object Grapher extends IOApp {
   private implicit val ioDelay: Delay[IO] = new Delay[IO] {
@@ -48,7 +49,9 @@ object Grapher extends IOApp {
 
   def graph(
     config: ConfigurationAlgebra[IO]
-  ): IO[(Zettelkasten, Iterable[GraphWarning], Iterable[RepositoryWarning])] =
+  ): IO[
+    (Zettelkasten, Network, Iterable[GraphWarning], Iterable[RepositoryWarning])
+  ] =
     for {
       _ <- IO.unit
       implicit0(c: ConfigurationAlgebra[IO]) = config
@@ -76,23 +79,7 @@ object Grapher extends IOApp {
         })
         .parSequence
       network <- info"generate network" >> graphGen.network(graph)
-      nodes = network.nodes
-      edges = network.edges
-      _ <- Seq(
-        withPrinter(f"$networkPath/mindmap-nodes.js").use(writer => {
-          info"write public/mindmap-nodes.js" >> IO {
-            implicit val formats = Serialization.formats(NoTypeHints)
-            writer.println(f"var nodes = ${write(nodes.toList)};")
-          }
-        }),
-        withPrinter(f"$networkPath/mindmap-edges.js").use(writer => {
-          info"write public/mindmap-edges.js" >> IO {
-            implicit val formats = Serialization.formats(NoTypeHints)
-            writer.println(f"var edges = ${write(edges.toList)};")
-          }
-        })
-      ).parSequence
-    } yield ((zettel, warnings, repoWarnings))
+    } yield ((zettel, network, warnings, repoWarnings))
 
   def run(args: List[String]): IO[ExitCode] = {
     val parsed = GrapherArgs(args)

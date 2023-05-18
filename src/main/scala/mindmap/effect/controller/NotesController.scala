@@ -26,7 +26,7 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
     renderer.render(node).pure[F]
   }
 
-  private def get(name: String): F[Response[F]] = {
+  private def get(name: String): F[Response[F]] =
     for {
       noteOpt <- zettelRepository.getNote(name)
       note <- MonadError[F, Throwable].fromOption(
@@ -37,7 +37,6 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
       template = html.note(note.title, HtmlFormat.raw(c))
       resp <- Ok(template.body, Header("Content-Type", "text/html"))
     } yield (resp)
-  }
 
   def routes(): HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / name =>
     get(name)

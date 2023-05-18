@@ -18,6 +18,7 @@ import tofu.syntax.logging._
 import tofu.Delay
 
 import mindmap.effect.configuration.RealConfiguration
+import mindmap.effect.controller.GraphController
 import mindmap.effect.controller.NotesController
 import mindmap.effect.controller.TagsController
 import mindmap.effect.controller.WarningController
@@ -33,10 +34,6 @@ object Server extends IOApp {
   private implicit val log: Logging[IO] =
     Logging.Make[IO].forService[IOApp]
 
-  def createGraphService(blocker: Blocker): HttpRoutes[IO] = {
-    fileService[IO](FileService.Config("public/graph", blocker))
-  }
-
   def createNetworkService(blocker: Blocker): HttpRoutes[IO] = {
     fileService[IO](FileService.Config("public/network", blocker))
   }
@@ -48,17 +45,24 @@ object Server extends IOApp {
   def createServer(config: ConfigurationAlgebra[IO]): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      (collection, graphWarnings, repoWarnings) <- Resource.eval(
+      (collection, network, graphWarnings, repoWarnings) <- Resource.eval(
         Grapher.graph(config)
       )
       zettelRepo = new MemoryZettelkastenRepository[IO](collection)
+      implicit0(c: ConfigurationAlgebra[IO]) = config
       _ <- Resource.eval(info"initialized zettelkasten service")
-      (notes, tags, warnings) <- (
+      (notes, graph, tags, warnings) <- (
         Resource.eval(
           new NotesController[IO](zettelRepo).routes().pure[IO]
         ) <* Resource
           .eval(
             info"initialized notes controller"
+          ),
+        Resource.eval(
+          new GraphController[IO](network).routes().pure[IO]
+        ) <* Resource
+          .eval(
+            info"initialized network controller"
           ),
         Resource.eval(
           new TagsController[IO](zettelRepo).routes().pure[IO]
@@ -71,18 +75,15 @@ object Server extends IOApp {
             .routes()
             .pure[IO]
         ) <* Resource.eval(info"initialized warning controller")
-      ).parMapN((a, b, c) => (a, b, c))
-      (assets, graph, network) <- (
+      ).parMapN((a, b, c, d) => (a, b, c, d))
+      (assets, network) <- (
         Resource.eval(createAssetsService(blocker).pure[IO]) <* Resource.eval(
           info"initialized assets service"
-        ),
-        Resource.eval(createGraphService(blocker).pure[IO]) <* Resource.eval(
-          info"initialized graph service"
         ),
         Resource.eval(createNetworkService(blocker).pure[IO]) <* Resource.eval(
           info"initialized network service"
         )
-      ).parMapN((a, b, c) => (a, b, c))
+      ).parMapN((a, b) => (a, b))
       app = Router(
         "/assets" -> assets,
         "/graph" -> graph,

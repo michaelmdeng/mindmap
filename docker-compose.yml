@@ -6,14 +6,8 @@ services:
       - "80:8080"
     volumes:
       - ./data/Dropbox/vimwiki:/data
-      - ./generated/graph:/app/public/graph
   grapher:
     image: ghcr.io/michaelmdeng/mindmap/grapher:latest
     volumes:
       - ./data/Dropbox/vimwiki:/data
       - ./generated/graph:/generated
-  generator:
-    image: ghcr.io/michaelmdeng/mindmap/generator:latest
-    volumes:
-      - ./data/Dropbox/vimwiki/wiki:/data
-      - ./generated:/generated
