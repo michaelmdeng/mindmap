@@ -47,11 +47,12 @@ object Server extends IOApp {
   def createServer(config: ConfigurationAlgebra[IO]): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      (collection, g, network, graphWarnings, repoWarnings) <- Resource.eval(
-        Grapher.graph(config)
-      )
+      (collection, graph, network, graphWarnings, repoWarnings) <- Resource
+        .eval(
+          Grapher.graph(config)
+        )
       zettelRepo = new MemoryZettelkastenRepository[IO](collection)
-      networkRepo = new MemoryMindmap[IO](g, network)
+      networkRepo = new MemoryMindmap[IO](graph, network)
       implicit0(c: ConfigurationAlgebra[IO]) = config
       _ <- Resource.eval(info"initialized zettelkasten service")
       (assets, index, notes, network, tags, warnings) <- (
