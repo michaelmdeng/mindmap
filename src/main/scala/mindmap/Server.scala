@@ -7,22 +7,28 @@ import cats.effect.IOApp
 import cats.effect.Resource
 import cats.implicits._
 import org.http4s.HttpRoutes
+import org.http4s.Uri
+import org.http4s.dsl.Http4sDsl
+import org.http4s.dsl.io._
 import org.http4s.ember.server.EmberServerBuilder
+import org.http4s.headers.Location
 import org.http4s.implicits._
 import org.http4s.server.Router
 import org.http4s.server.Server
 import org.http4s.server.staticcontent._
 import org.http4s.syntax.all._
+import tofu.Delay
 import tofu.logging.Logging
 import tofu.syntax.logging._
-import tofu.Delay
 
 import mindmap.effect.configuration.RealConfiguration
-import mindmap.effect.controller.GraphController
+import mindmap.effect.controller.AssetsController
+import mindmap.effect.controller.NetworkController
 import mindmap.effect.controller.NotesController
 import mindmap.effect.controller.TagsController
 import mindmap.effect.controller.WarningController
 import mindmap.effect.zettelkasten.MemoryZettelkastenRepository
+import mindmap.effect.MemoryMindmap
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.configuration.ServerArgs
 
@@ -34,10 +40,6 @@ object Server extends IOApp {
   private implicit val log: Logging[IO] =
     Logging.Make[IO].forService[IOApp]
 
-  def createNetworkService(blocker: Blocker): HttpRoutes[IO] = {
-    fileService[IO](FileService.Config("public/network", blocker))
-  }
-
   def createAssetsService(blocker: Blocker): HttpRoutes[IO] = {
     fileService[IO](FileService.Config("public/assets", blocker))
   }
@@ -45,13 +47,20 @@ object Server extends IOApp {
   def createServer(config: ConfigurationAlgebra[IO]): Resource[IO, Server] =
     for {
       blocker <- Blocker[IO]
-      (collection, network, graphWarnings, repoWarnings) <- Resource.eval(
+      (collection, g, network, graphWarnings, repoWarnings) <- Resource.eval(
         Grapher.graph(config)
       )
       zettelRepo = new MemoryZettelkastenRepository[IO](collection)
+      networkRepo = new MemoryMindmap[IO](g, network)
       implicit0(c: ConfigurationAlgebra[IO]) = config
       _ <- Resource.eval(info"initialized zettelkasten service")
-      (notes, graph, tags, warnings) <- (
+      (assets, index, notes, network, tags, warnings) <- (
+        Resource.eval(
+          new AssetsController[IO](blocker).assetsRoutes().pure[IO]
+        ),
+        Resource.eval(
+          new AssetsController[IO](blocker).indexRoutes().pure[IO]
+        ),
         Resource.eval(
           new NotesController[IO](zettelRepo).routes().pure[IO]
         ) <* Resource
@@ -59,7 +68,7 @@ object Server extends IOApp {
             info"initialized notes controller"
           ),
         Resource.eval(
-          new GraphController[IO](network).routes().pure[IO]
+          new NetworkController[IO](networkRepo, zettelRepo).routes().pure[IO]
         ) <* Resource
           .eval(
             info"initialized network controller"
@@ -75,23 +84,14 @@ object Server extends IOApp {
             .routes()
             .pure[IO]
         ) <* Resource.eval(info"initialized warning controller")
-      ).parMapN((a, b, c, d) => (a, b, c, d))
-      (assets, network) <- (
-        Resource.eval(createAssetsService(blocker).pure[IO]) <* Resource.eval(
-          info"initialized assets service"
-        ),
-        Resource.eval(createNetworkService(blocker).pure[IO]) <* Resource.eval(
-          info"initialized network service"
-        )
-      ).parMapN((a, b) => (a, b))
+      ).parMapN((a, b, c, d, e, f) => (a, b, c, d, e, f))
       app = Router(
         "/assets" -> assets,
-        "/graph" -> graph,
         "/network" -> network,
         "/notes" -> notes,
         "/tags" -> tags,
         "/warnings" -> warnings,
-        "/" -> network
+        "/" -> index
       ).orNotFound
       server <- EmberServerBuilder
         .default[IO]

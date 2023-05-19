@@ -28,9 +28,6 @@ object NetworkEdge {
   def toggle(edge: NetworkEdge, shouldShow: Boolean): NetworkEdge =
     if (shouldShow) show(edge) else hide(edge)
 
-  def tagEdge(from: Long, to: Long): NetworkEdge = NetworkEdge(from, to)
   def noteEdge(from: Long, to: Long): NetworkEdge =
     NetworkEdge(from, to, arrows = Some("to"))
-  def doubleEdge(from: Long, to: Long): NetworkEdge =
-    NetworkEdge(from, to, arrows = Some("from,to"))
 }
