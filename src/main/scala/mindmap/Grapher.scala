@@ -9,6 +9,8 @@ import java.io.PrintWriter
 import org.json4s.NoTypeHints
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.write
+import scalax.collection.Graph
+import scalax.collection.GraphEdge.DiEdge
 import tofu.logging.Logging
 import tofu.syntax.logging._
 import tofu.Delay
@@ -20,14 +22,15 @@ import mindmap.effect.parser.CommonMarkRepositoryParser
 import mindmap.effect.parser.MarkdownZettelkastenParser
 import mindmap.effect.parser.RealRepositoryWarnings
 import mindmap.effect.parser.VimwikiCollectionParser
+import mindmap.model.Entity
+import mindmap.model.Zettelkasten
 import mindmap.model.configuration.ConfigurationAlgebra
 import mindmap.model.configuration.GrapherArgs
-import mindmap.model.Zettelkasten
-import mindmap.model.parser.RepositoryWarning.instances._
-import mindmap.model.parser.RepositoryWarning
-import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.GraphWarning
+import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.Network
+import mindmap.model.parser.RepositoryWarning
+import mindmap.model.parser.RepositoryWarning.instances._
 
 object Grapher extends IOApp {
   private implicit val ioDelay: Delay[IO] = new Delay[IO] {
@@ -37,20 +40,16 @@ object Grapher extends IOApp {
   private implicit val log: Logging[IO] =
     Logging.Make[IO].forService[IOApp]
 
-  def withPrinter(file: String): Resource[IO, PrintWriter] =
-    Resource.make(debug"acquire writer to $file" >> IO(new PrintWriter(file)))(
-      pw => {
-        debug"close writer to $file" >> IO {
-          pw.flush()
-          pw.close()
-        }
-      }
-    )
-
   def graph(
     config: ConfigurationAlgebra[IO]
   ): IO[
-    (Zettelkasten, Network, Iterable[GraphWarning], Iterable[RepositoryWarning])
+    (
+      Zettelkasten,
+      Graph[Entity, DiEdge],
+      Network,
+      Iterable[GraphWarning],
+      Iterable[RepositoryWarning]
+    )
   ] =
     for {
       _ <- IO.unit
@@ -79,7 +78,7 @@ object Grapher extends IOApp {
         })
         .parSequence
       network <- info"generate network" >> graphGen.network(graph)
-    } yield ((zettel, network, warnings, repoWarnings))
+    } yield ((zettel, graph, network, warnings, repoWarnings))
 
   def run(args: List[String]): IO[ExitCode] = {
     val parsed = GrapherArgs(args)

@@ -1,16 +1,5 @@
-var container = document.getElementById('mynetwork');
-
-async function fetchNodes() {
-  return fetch(`${window.location.origin}/graph/nodes`, {
-    method: 'GET',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-  }).then(response => response.json())
-}
-
-async function fetchEdges() {
-  return fetch(`${window.location.origin}/graph/edges`, {
+async function fetchNetwork() {
+  return fetch(`${window.location.origin}/network`, {
     method: 'GET',
     headers: {
         'Content-Type': 'application/json',
@@ -19,8 +8,9 @@ async function fetchEdges() {
 }
 
 async function initializeNetwork() {
-  var nodes = await fetchNodes();
-  var edges = await fetchEdges();
+  var network = await fetchNetwork();
+  var nodes = network.nodes;
+  var edges = network.edges;
 
   nodes.forEach(node => {
     node.hidden = false;
@@ -92,6 +82,7 @@ async function initializeNetwork() {
     },
   };
 
+  var container = document.getElementById('mynetwork');
   var network = new vis.Network(container, data, options);
   var options = {
     joinCondition: function(parentNodeOptions, childNodeOptions) {
