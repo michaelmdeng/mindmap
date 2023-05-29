@@ -25,7 +25,7 @@ class MemoryZettelkastenRepository[F[_]: Monad[*[_]]](
       links <- zettelkasten.links
         .filter(link => {
           link.from match {
-            case t: Tag => t == t
+            case t: Tag => t.name == tag.name
             case default => false
           }
         })
