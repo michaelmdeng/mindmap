@@ -3,6 +3,7 @@ package mindmap.effect.controller
 import cats.Defer
 import cats.MonadError
 import cats.syntax.applicative._
+import cats.syntax.applicativeError._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import org.http4s.Header
@@ -49,12 +50,16 @@ class NetworkController[F[_]: MonadError[*[_], Throwable]: Defer[
     }
   } yield (resp)
 
-  private def tagNetwork(title: String): F[Response[F]] = for {
-    tagOpt <- zettel.getTag(title)
-    tag <- MonadError[F, Throwable].fromOption(
-      tagOpt,
-      new Exception(s"Tag $title not found")
-    )
+  private def tagNetwork(name: String): F[Response[F]] = for {
+    tagOpt <- zettel.getTag(name)
+    tag <- MonadError[F, Throwable]
+      .fromOption(
+        tagOpt,
+        new Exception(s"Tag $name not found")
+      )
+      .onError { case e =>
+        error"Error: ${e.getMessage()}"
+      }
     sub <- mindmap.subnetwork(tag)
     resp <- {
       implicit val formats = Serialization.formats(NoTypeHints)

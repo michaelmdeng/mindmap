@@ -1,9 +1,9 @@
 async function fetchNetwork(pageName) {
   var isTag = window.location.pathname.includes('tags');
   if (isTag) {
-    var url = `${window.location.origin}/graph/tag/${pageName}`
+    var url = `${window.location.origin}/network/tag/${pageName}`
   } else {
-    var url = `${window.location.origin}/graph/note/${pageName}`
+    var url = `${window.location.origin}/network/note/${pageName}`
   }
   return fetch(url, {
     method: 'GET',
@@ -71,16 +71,17 @@ async function initializeSubnetwork(pageName) {
         springConstant: 0.05,
         springLength: 50,
         avoidOverlap: 0.75,
+        damping: 0.25,
       },
       maxVelocity: 100,
       minVelocity: 2.5,
       stabilization: {
-        iterations: 200,
+        iterations: 500,
       },
     },
   };
 
-var container = document.getElementById('note-network');
+  var container = document.getElementById('note-network');
   var network = new vis.Network(container, data, options);
 
   network.on("doubleClick", function (obj) {
