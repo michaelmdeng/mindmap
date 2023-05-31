@@ -26,8 +26,8 @@ class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
       graph.find(entity),
       new Exception("No entity")
     )
-    idxByNode = Set(node)
-      .union(node.neighbors)
+    neighborhood = Set(node).union(node.neighbors)
+    idxByNode = neighborhood
       .map(_.toOuter)
       .zipWithIndex
       .toMap
@@ -37,10 +37,17 @@ class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
         case tag: Tag => NetworkNode.tagNode(idx, tag.name)
       }
     }
-    edges = node.edges.map { edge =>
-      val source = idxByNode(edge.source.toOuter)
-      val target = idxByNode(edge.target.toOuter)
-      NetworkEdge.noteEdge(source, target)
-    }
+    edges = neighborhood
+      .flatMap(_.edges)
+      .flatMap(edge => {
+        idxByNode.get(edge.source.toOuter) match {
+          case Some(source) =>
+            idxByNode.get(edge.target.toOuter) match {
+              case Some(target) => Set(NetworkEdge.noteEdge(source, target))
+              case None => Set()
+            }
+          case None => Set()
+        }
+      })
   } yield (Network(nodes = nodes, edges = edges))
 }

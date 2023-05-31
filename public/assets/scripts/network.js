@@ -73,6 +73,7 @@ async function initializeNetwork() {
         springConstant: 0.01,
         springLength: 250,
         avoidOverlap: 0.5,
+        damping: 0.25,
       },
       maxVelocity: 100,
       minVelocity: 5,
