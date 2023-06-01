@@ -3,6 +3,7 @@ package mindmap.effect.graph
 import cats.Monad
 import cats.instances.list._
 import cats.syntax.applicative._
+import cats.syntax.eq._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.functorFilter._
@@ -13,6 +14,7 @@ import scalax.collection.GraphTraversal.AnyConnected
 import mindmap.model.Entity
 import mindmap.model.Note
 import mindmap.model.Tag
+import mindmap.model.graph.SelfLink
 import mindmap.model.graph.SingleTag
 import mindmap.model.graph.SingleNote
 import mindmap.model.graph.OverlappingTags
@@ -94,13 +96,36 @@ class RealGraphWarnings[F[+_]: Monad[*[_]]] extends GraphWarningAlgebra[F] {
       .pure[F]
   }
 
+  private def selfLinks(graph: Graph[Entity, DiEdge]): F[List[SelfLink]] = {
+    graph.nodes.toList
+      .mapFilter(node => {
+        for {
+          selfLinkedNoteNode <- GraphNode
+            .noteNode(node)
+            .filter(noteNode => {
+              noteNode.node.edges.exists(edge => {
+                edge.toOuter match {
+                  case DiEdge(source, target) =>
+                    (source, target) match {
+                      case (s: Note, t: Note) => s === t
+                      case default => false
+                    }
+                }
+              })
+            })
+        } yield (SelfLink(selfLinkedNoteNode.note))
+      })
+      .pure[F]
+  }
+
   def warnings(graph: Graph[Entity, DiEdge]): F[Iterable[GraphWarning]] = {
     for {
       tagWarnings <- singleTags(graph)
       noteWarnings <- singleNotes(graph)
       tagOverlapWarnings <- overlappingTags(graph)
+      selfLinkWarnings <- selfLinks(graph)
     } yield {
-      tagWarnings ++ noteWarnings ++ tagOverlapWarnings
+      tagWarnings ++ noteWarnings ++ tagOverlapWarnings ++ selfLinkWarnings
     }
   }
 }

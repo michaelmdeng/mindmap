@@ -16,6 +16,7 @@ sealed trait GraphWarning
 case class SingleTag(tag: Tag) extends GraphWarning
 case class SingleNote(note: Note) extends GraphWarning
 case class OverlappingTags(first: Tag, second: Tag) extends GraphWarning
+case class SelfLink(note: Note) extends GraphWarning
 
 object GraphWarning {
   object instances {
@@ -57,8 +58,17 @@ object GraphWarning {
             case singleNote: SingleNote => showForSingleNote.show(singleNote)
             case overlappingTags: OverlappingTags =>
               showForOverlappingTags.show(overlappingTags)
+            case selfLink: SelfLink => showForSelfLink.show(selfLink)
           }
         }
       }
+
+    implicit def showForSelfLink: Show[SelfLink] = new Show[SelfLink] {
+      def show(selfLink: SelfLink): String =
+        f"Note: ${selfLink.note.title} links to itself"
+    }
+
+    implicit def orderingForSelfLink: Ordering[SelfLink] =
+      Ordering.by(_.note.title)
   }
 }
