@@ -2,7 +2,8 @@
   singleTags: List[mindmap.model.graph.SingleTag],
   singleNotes: List[mindmap.model.graph.SingleNote],
   overlappingTags: List[mindmap.model.graph.OverlappingTags],
-  unresolvableLinks: Iterable[mindmap.model.parser.UnresolvableLink]
+  unresolvableLinks: Iterable[mindmap.model.parser.UnresolvableLink],
+  selfLinks: List[mindmap.model.graph.SelfLink]
 )
 
 @main("Warnings"){
@@ -44,6 +45,14 @@
         </a> -
         <a href="@{s"/tags/${t.second.name}"}">
           @t.second.name
+        </a>
+      </li>
+    }
+    <h2>Self Links</h2>
+    @for(l <- selfLinks) {
+      <li>
+        <a href="@{s"/notes/${l.note.title}"}">
+          @l.note.title
         </a>
       </li>
     }

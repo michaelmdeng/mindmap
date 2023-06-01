@@ -12,6 +12,7 @@ import org.http4s.dsl.Http4sDsl
 import mindmap.model.graph.GraphWarning
 import mindmap.model.graph.GraphWarning.instances._
 import mindmap.model.graph.OverlappingTags
+import mindmap.model.graph.SelfLink
 import mindmap.model.graph.SingleNote
 import mindmap.model.graph.SingleTag
 import mindmap.model.parser.RepositoryWarning
@@ -55,11 +56,20 @@ class WarningController[F[_]: Applicative[*[_]]: Defer[*[_]]](
         }
       )
       .sorted
+    val selfLinks = graphWarnings.toList
+      .mapFilter(warning =>
+        warning match {
+          case t: SelfLink => Some(t)
+          case default => None
+        }
+      )
+      .sorted
     val template = html.warnings(
       singleTags,
       singleNotes,
       overlappingTags,
-      unresolvableLinks
+      unresolvableLinks,
+      selfLinks
     )
     Ok(template.body, Header("Content-Type", "text/html"))
   }
