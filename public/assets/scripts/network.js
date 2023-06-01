@@ -69,14 +69,14 @@ async function initializeNetwork() {
     physics: {
       barnesHut: {
         centralGravity: 1,
-        gravitationalConstant: -20000,
+        gravitationalConstant: -30000,
         springConstant: 0.01,
         springLength: 250,
         avoidOverlap: 0.5,
-        damping: 0.25,
+        damping: 0.20,
       },
       maxVelocity: 100,
-      minVelocity: 5,
+      minVelocity: 2.5,
       stabilization: {
         iterations: 500,
       },
@@ -91,7 +91,7 @@ async function initializeNetwork() {
     },
     processProperties: generateCluster,
   }
-  network.clustering.clusterByHubsize(10, options);
+  network.clustering.clusterByHubsize(12, options);
 
   network.on("doubleClick", function (obj) {
     var nodeId = obj.nodes[0];
