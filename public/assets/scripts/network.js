@@ -97,7 +97,8 @@ async function initializeNetwork() {
   var network = new vis.Network(container, data, options);
   var options = {
     joinCondition: function(parentNodeOptions, childNodeOptions) {
-      return !network.clustering.isCluster(childNodeOptions.id) && parentNodeOptions.group === "tag";
+      var node = nodes.find(n => n.id === parentNodeOptions.id);
+      return !network.clustering.isCluster(childNodeOptions.id) && parentNodeOptions.group === "tag" && !config.excludeClusterTags.some(tag => tag.name == node.label);
     },
     processProperties: generateCluster,
   }
