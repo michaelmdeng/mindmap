@@ -7,8 +7,18 @@ async function fetchNetwork() {
   }).then(response => response.json())
 }
 
+async function fetchNetworkConfig() {
+  return fetch(`${window.location.origin}/config/network`, {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+  }).then(response => response.json())
+}
+
 async function initializeNetwork() {
   var network = await fetchNetwork();
+  var config = await fetchNetworkConfig();
   var nodes = network.nodes;
   var edges = network.edges;
 
@@ -91,7 +101,7 @@ async function initializeNetwork() {
     },
     processProperties: generateCluster,
   }
-  network.clustering.clusterByHubsize(12, options);
+  network.clustering.clusterByHubsize(config.clusterThreshold, options);
 
   network.on("doubleClick", function (obj) {
     var nodeId = obj.nodes[0];

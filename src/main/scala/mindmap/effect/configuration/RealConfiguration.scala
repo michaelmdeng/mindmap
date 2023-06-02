@@ -15,7 +15,7 @@ import tofu.syntax.logging._
 import mindmap.model.Tag
 import mindmap.model.configuration.CollectionConfiguration
 import mindmap.model.configuration.ConfigurationAlgebra
-import mindmap.model.configuration.GraphConfiguration
+import mindmap.model.configuration.NetworkConfiguration
 import mindmap.model.configuration.RepositoryConfiguration
 
 object RealConfiguration {
@@ -35,12 +35,12 @@ object RealConfiguration {
       private val collectionPath: File = new File(rootPath, "wiki")
       private val notePath: File = new File(rootPath, "html")
 
-      def root(): F[File] = collectionConfiguration.map(_.root)
-      def maxDepth(): F[Int] = collectionConfiguration.map(_.depth)
+      def root(): F[File] = collectionConfig().map(_.root)
+      def maxDepth(): F[Int] = collectionConfig().map(_.depth)
 
       def isIgnoreFile(path: Path): F[Boolean] =
         for {
-          config <- collectionConfiguration
+          config <- collectionConfig()
         } yield {
           val isMarkdown = markdownFiles.matches(path)
           val isIgnore = config.ignores
@@ -53,7 +53,7 @@ object RealConfiguration {
           !isMarkdown || isIgnore
         }
 
-      private def collectionConfiguration: F[CollectionConfiguration] =
+      def collectionConfig(): F[CollectionConfiguration] =
         for {
           ignoreExists <- Effect[F].delay(
             new File(f"${collectionPath.getPath()}/${IGNORE_FILE}").exists()
@@ -74,6 +74,9 @@ object RealConfiguration {
           CollectionConfiguration(collectionPath, ignores = ignores)
         }
 
+      def repositoryConfig(): F[RepositoryConfiguration] =
+        RepositoryConfiguration.DEFAULT.pure[F]
+
       def isIgnoreTag(tag: Tag): F[Boolean] =
         for {
           config <- RepositoryConfiguration.DEFAULT.pure[F]
@@ -81,14 +84,12 @@ object RealConfiguration {
           config.excludeTags.contains(tag)
         }
 
-      private def graphConfiguration: F[GraphConfiguration] =
-        GraphConfiguration.DEFAULT.pure[F]
+      def networkConfig(): F[NetworkConfiguration] =
+        NetworkConfiguration.DEFAULT.pure[F]
 
-      def clusteringEnabled(): F[Boolean] =
-        graphConfiguration.map(_.clusterEnabled)
       def clusterThreshold(): F[Int] =
-        graphConfiguration.map(_.clusterThreshold)
+        networkConfig().map(_.clusterThreshold)
       def isIgnoreClusterTag(tag: Tag): F[Boolean] =
-        graphConfiguration.map(_.excludeClusterTags.contains(tag))
+        networkConfig().map(_.excludeClusterTags.contains(tag))
     }
 }
