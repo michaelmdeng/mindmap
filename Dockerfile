@@ -13,12 +13,12 @@ COPY project /app/project
 RUN /dep/cs launch sbt -- assembly
 
 FROM alpine:3.18 AS npmbuild
-RUN apk --no-cache add nodejs npm
 WORKDIR /scripts
-COPY public/assets/scripts /s
+RUN apk --no-cache add nodejs npm
 RUN npm install terser
-RUN npm run terser public/assets/scripts/network.js /scripts/network.min.js
-RUN npm run terser public/assets/scripts/sub-network.js /scripts/sub-network.min.js
+COPY public/assets/scripts /scripts
+RUN npx terser network.js -o network.min.js
+RUN npx terser sub-network.js -o sub-network.min.js
 
 FROM eclipse-temurin:17 AS server
 WORKDIR /app
