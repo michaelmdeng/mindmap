@@ -12,9 +12,19 @@ COPY project /app/project
 # Build application
 RUN /dep/cs launch sbt -- assembly
 
+FROM alpine:3.18 AS npmbuild
+WORKDIR /scripts
+RUN apk --no-cache add nodejs npm
+RUN npm install terser
+COPY public/assets/scripts /scripts
+RUN npx terser network.js -o network.min.js
+RUN npx terser sub-network.js -o sub-network.min.js
+
 FROM eclipse-temurin:17 AS server
 WORKDIR /app
 COPY --from=build /app/target/mindmap.jar /app/target/mindmap.jar
+COPY --from=npmbuild /scripts/network.min.js /app/public/assets/scripts/network.min.js
+COPY --from=npmbuild /scripts/sub-network.min.js /app/public/assets/scripts/sub-network.min.js
 COPY public /app/public
 ENTRYPOINT ["java", "-jar", "/app/target/mindmap.jar", "--class", "mindmap.Server", "--", "--path", "/data"]
 
