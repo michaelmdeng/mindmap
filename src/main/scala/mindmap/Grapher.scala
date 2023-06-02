@@ -37,8 +37,7 @@ object Grapher extends IOApp {
     def delay[A](fa: => A): IO[A] = IO.delay(fa)
   }
   private implicit val makeLogging: Logging.Make[IO] = Logging.Make.plain[IO]
-  private implicit val log: Logging[IO] =
-    Logging.Make[IO].forService[IOApp]
+  private implicit val log: Logging[IO] = Logging.Make[IO].forService[IOApp]
 
   def graph(
     config: ConfigurationAlgebra[IO]

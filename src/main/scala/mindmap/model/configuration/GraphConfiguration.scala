@@ -11,7 +11,7 @@ case class GraphConfiguration(
 object GraphConfiguration {
   val DEFAULT: GraphConfiguration =
     GraphConfiguration(
-      clusterEnabled = true,
+      clusterEnabled = false,
       clusterThreshold = 7,
       excludeClusterTags = Set()
     )
