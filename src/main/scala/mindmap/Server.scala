@@ -23,6 +23,7 @@ import tofu.syntax.logging._
 
 import mindmap.effect.configuration.RealConfiguration
 import mindmap.effect.controller.AssetsController
+import mindmap.effect.controller.ConfigurationController
 import mindmap.effect.controller.NetworkController
 import mindmap.effect.controller.NotesController
 import mindmap.effect.controller.TagsController
@@ -54,13 +55,23 @@ object Server extends IOApp {
       zettelRepo = new MemoryZettelkastenRepository[IO](collection)
       networkRepo = new MemoryMindmap[IO](graph, network)
       implicit0(c: ConfigurationAlgebra[IO]) = config
+      collectionConfig <- Resource.eval(config.collectionConfig())
+      networkConfig <- Resource.eval(config.networkConfig())
+      repositoryConfig <- Resource.eval(config.repositoryConfig())
       _ <- Resource.eval(info"initialized zettelkasten service")
-      (assets, index, notes, network, tags, warnings) <- (
+      (assets, index, configControl, notes, network, tags, warnings) <- (
         Resource.eval(
           new AssetsController[IO](blocker).assetsRoutes().pure[IO]
         ),
         Resource.eval(
           new AssetsController[IO](blocker).indexRoutes().pure[IO]
+        ),
+        Resource.eval(
+          new ConfigurationController[IO](
+            collectionConfig,
+            networkConfig,
+            repositoryConfig
+          ).routes().pure[IO]
         ),
         Resource.eval(
           new NotesController[IO](zettelRepo).routes().pure[IO]
@@ -85,9 +96,10 @@ object Server extends IOApp {
             .routes()
             .pure[IO]
         ) <* Resource.eval(info"initialized warning controller")
-      ).parMapN((a, b, c, d, e, f) => (a, b, c, d, e, f))
+      ).parMapN((a, b, c, d, e, f, g) => (a, b, c, d, e, f, g))
       app = Router(
         "/assets" -> assets,
+        "/config" -> configControl,
         "/network" -> network,
         "/notes" -> notes,
         "/tags" -> tags,
