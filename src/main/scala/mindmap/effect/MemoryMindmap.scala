@@ -39,15 +39,22 @@ class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
     }
     edges = neighborhood
       .flatMap(_.edges)
-      .flatMap(edge => {
-        idxByNode.get(edge.source.toOuter) match {
-          case Some(source) =>
-            idxByNode.get(edge.target.toOuter) match {
-              case Some(target) => Set(NetworkEdge.noteEdge(source, target))
-              case None => Set()
-            }
-          case None => Set()
-        }
+      .filter(edge => {
+        idxByNode.get(edge.source.toOuter).isDefined &&
+        idxByNode.get(edge.target.toOuter).isDefined
       })
+      // De-dupe edges
+      .groupBy(edge => {
+        val source = idxByNode(edge.source.toOuter)
+        val target = idxByNode(edge.target.toOuter)
+        (Math.min(source, target), Math.max(source, target))
+      })
+      .map { case ((source, target), edges) =>
+        if (edges.size == 1)
+          NetworkEdge.noteEdge(source, target)
+        else {
+          NetworkEdge(source, target, arrows = Some("to,from"))
+        }
+      }
   } yield (Network(nodes = nodes, edges = edges))
 }
