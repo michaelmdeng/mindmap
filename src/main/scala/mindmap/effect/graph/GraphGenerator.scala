@@ -46,9 +46,16 @@ class GraphGenerator[F[+_]: Applicative[*[_]]: ConfigurationAlgebra[
       }
     })
 
-    val networkEdges = graph.edges.map(edge => {
-      NetworkEdge(idxByNode(edge.from.toOuter), idxByNode(edge.to.toOuter))
-    })
+    val networkEdges = graph.edges
+      // De-dupe edges
+      .groupBy(edge => {
+        val source = idxByNode(edge.source.toOuter)
+        val target = idxByNode(edge.target.toOuter)
+        (Math.min(source, target), Math.max(source, target))
+      })
+      .map { case ((source, target), _) =>
+        NetworkEdge(source, target)
+      }
 
     Network(nodes = networkNodes, edges = networkEdges).pure[F]
   }
