@@ -67,9 +67,21 @@ class NetworkController[F[_]: MonadError[*[_], Throwable]: Defer[
     }
   } yield (resp)
 
+  private def find(id: Long): F[Response[F]] = for {
+    nodeOpt <- mindmap.find(id)
+    resp <- nodeOpt match {
+      case Some(node) => {
+        implicit val formats = Serialization.formats(NoTypeHints)
+        Ok(Serialization.write(node))
+      }
+      case None => NotFound()
+    }
+  } yield (resp)
+
   def routes(): HttpRoutes[F] = HttpRoutes.of[F] {
     case GET -> Root => network()
     case GET -> Root / "note" / title => noteNetwork(title)
     case GET -> Root / "tag" / title => tagNetwork(title)
+    case GET -> Root / "node" / LongVar(id) => find(id)
   }
 }

@@ -34,29 +34,28 @@ class GraphGenerator[F[+_]: Applicative[*[_]]: ConfigurationAlgebra[
   }
 
   def network(graph: Graph[Entity, DiEdge]): F[Network] = {
-    val idxByNode = graph.nodes.zipWithIndex.map { case (node, idx) =>
-      (node.toOuter, idx.toLong)
-    }.toMap
-
-    val networkNodes = graph.nodes.map(node => {
-      node.toOuter match {
-        case note: Note =>
-          NetworkNode.noteNode(idxByNode(note), note.title, note.content)
-        case tag: Tag => NetworkNode.tagNode(idxByNode(tag), tag.name)
-      }
-    })
+    val nodeMap = graph.nodes
+      .map(node => {
+        val networkNode = node.toOuter match {
+          case note: Note =>
+            NetworkNode.noteNode(note.title, note.content)
+          case tag: Tag => NetworkNode.tagNode(tag.name)
+        }
+        (node.toOuter, networkNode)
+      })
+      .toMap
 
     val networkEdges = graph.edges
       // De-dupe edges
       .groupBy(edge => {
-        val source = idxByNode(edge.source.toOuter)
-        val target = idxByNode(edge.target.toOuter)
+        val source = nodeMap(edge.source.toOuter).id
+        val target = nodeMap(edge.target.toOuter).id
         (Math.min(source, target), Math.max(source, target))
       })
       .map { case ((source, target), _) =>
         NetworkEdge(source, target)
       }
 
-    Network(nodes = networkNodes, edges = networkEdges).pure[F]
+    Network(nodes = nodeMap.values, edges = networkEdges).pure[F]
   }
 }
