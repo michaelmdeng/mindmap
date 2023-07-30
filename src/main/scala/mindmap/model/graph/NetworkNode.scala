@@ -1,7 +1,6 @@
 package mindmap.model.graph
 
-import scala.math.abs
-import scala.math.sqrt
+import scala.math
 import scala.util.Random
 
 import mindmap.model.Note
@@ -15,9 +14,7 @@ case class NetworkNode(
   title: Option[String] = None,
   group: Option[String] = None,
   physics: Option[Boolean] = None,
-  hidden: Option[Boolean] = None,
-  x: Option[Long] = None,
-  y: Option[Long] = None
+  hidden: Option[Boolean] = None
 )
 
 object NetworkNode {
@@ -36,14 +33,14 @@ object NetworkNode {
 
   def noteNode(label: String, content: String): NetworkNode =
     NetworkNode(
-      abs(Random.nextLong()),
-      label,
+      id = math.abs(Random.nextLong()),
+      label = label,
       group = Some("note")
     )
 
   def tagNode(label: String): NetworkNode = NetworkNode(
-    abs(Random.nextLong()),
-    label,
+    id = math.abs(Random.nextLong()),
+    label = label,
     group = Some("tag")
   )
 }

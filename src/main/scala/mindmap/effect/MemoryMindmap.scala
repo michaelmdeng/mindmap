@@ -16,7 +16,7 @@ import mindmap.model.graph.NetworkEdge
 
 class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
   graph: Graph[Entity, DiEdge],
-  network: Network
+  network: Network,
 ) extends MindmapAlgebra[F] {
   def network(): F[Network] = network.pure[F]
 
@@ -31,7 +31,8 @@ class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
     )
     neighborhood = Set(node).union(node.neighbors)
     nodeMap = neighborhood
-      .map(entity => {
+      .map(graphNode => {
+        val entity = graphNode.toOuter
         val networkNode = entity match {
           case note: Note => NetworkNode.noteNode(note.title, note.content)
           case tag: Tag => NetworkNode.tagNode(tag.name)
