@@ -108,4 +108,4 @@ async function initializeSubnetwork(pageName) {
 }
 
 var pageName = document.getElementsByClassName('post-title').item(0).textContent.split('.')[0]
-var network = await initializeSubnetwork(pageName);
+var res = initializeSubnetwork(pageName);

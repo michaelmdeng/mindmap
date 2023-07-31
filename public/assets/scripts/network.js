@@ -145,4 +145,4 @@ function generateCluster(clusterOptions, childNodes, childEdges) {
   return clusterOptions;
 }
 
-var network = await initializeNetwork();
+var res =  initializeNetwork();
