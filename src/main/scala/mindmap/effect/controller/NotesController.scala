@@ -12,6 +12,8 @@ import org.http4s.Header
 import org.http4s.HttpRoutes
 import org.http4s.Response
 import org.http4s.dsl.Http4sDsl
+import org.json4s.NoTypeHints
+import org.json4s.native.Serialization
 import play.twirl.api.HtmlFormat
 
 import mindmap.model.ZettelkastenAlgebra
@@ -19,6 +21,8 @@ import mindmap.model.ZettelkastenAlgebra
 class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
   zettelRepository: ZettelkastenAlgebra[F]
 ) extends Http4sDsl[F] {
+  implicit val formats = Serialization.formats(NoTypeHints)
+
   private def parse(content: String): F[String] = {
     val parser = Parser.builder().build()
     val node = parser.parse(content)
@@ -38,7 +42,27 @@ class NotesController[F[_]: Defer[*[_]]: MonadError[*[_], Throwable]](
       resp <- Ok(template.body, Header("Content-Type", "text/html"))
     } yield (resp)
 
-  def routes(): HttpRoutes[F] = HttpRoutes.of[F] { case GET -> Root / name =>
-    get(name)
+  private def index(): F[Response[F]] =
+    for {
+      notes <- zettelRepository.notes()
+      resp <- Ok(Serialization.write(notes))
+    } yield (resp)
+
+  private def find(id: Long): F[Response[F]] =
+    for {
+      noteOpt <- zettelRepository.findNote(id)
+      note <- MonadError[F, Throwable].fromOption(
+        noteOpt,
+        new Exception(f"Cannot find note with id: $id")
+      )
+      c <- parse(note.content)
+      template = html.note(note.title, HtmlFormat.raw(c))
+      resp <- Ok(template.body, Header("Content-Type", "text/html"))
+    } yield (resp)
+
+  def routes(): HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root => index()
+    case GET -> Root / name => get(name)
+    case GET -> Root / "find" / LongVar(id) => find(id)
   }
 }

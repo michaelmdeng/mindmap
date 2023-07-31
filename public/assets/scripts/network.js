@@ -127,6 +127,10 @@ async function initializeNetwork() {
     }
   });
 
+  network.on("stabilized", function (obj) {
+    network;
+  });
+
   return network;
 }
 
@@ -141,4 +145,4 @@ function generateCluster(clusterOptions, childNodes, childEdges) {
   return clusterOptions;
 }
 
-initializeNetwork();
+var res =  initializeNetwork();

@@ -11,11 +11,11 @@ import mindmap.model.Tag
 import mindmap.model.Zettelkasten
 import mindmap.model.ZettelkastenAlgebra
 
-class MemoryZettelkastenRepository[F[_]: Monad[*[_]]](
+class MemoryZettelkastenRepository[F[+_]: Monad[*[_]]](
   zettelkasten: Zettelkasten
 ) extends ZettelkastenAlgebra[F] {
-  def getNote(name: String): F[Option[Note]] =
-    zettelkasten.notes.find(_.title == name).pure[F]
+  def getNote(title: String): F[Option[Note]] =
+    zettelkasten.notes.find(_.title == title).pure[F]
 
   def getTag(name: String): F[Option[Tag]] =
     zettelkasten.tags.find(_.name == name).pure[F]
@@ -41,4 +41,12 @@ class MemoryZettelkastenRepository[F[_]: Monad[*[_]]](
         .toSet
         .pure[F]
     } yield (notes)
+
+  def notes(): F[Iterable[Note]] = zettelkasten.notes.pure[F]
+
+  def tags(): F[Set[Tag]] = zettelkasten.tags.toSet.pure[F]
+
+  def findNote(id: Long): F[Option[Note]] = zettelkasten.findNote(id).pure[F]
+
+  def findTag(id: Long): F[Option[Tag]] = zettelkasten.findTag(id).pure[F]
 }

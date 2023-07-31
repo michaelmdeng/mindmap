@@ -4,6 +4,8 @@ import cats.Show
 import cats.Eq
 import java.time.LocalDateTime
 import java.nio.file.Path
+import scala.util.Random
+import scala.math
 
 case class Note(
   content: String,
@@ -11,7 +13,7 @@ case class Note(
   modifiedDate: LocalDateTime,
   title: String,
   path: java.nio.file.Path,
-  id: Option[Long]
+  id: Long
 ) extends Entity
 
 object Note {
@@ -28,7 +30,7 @@ object Note {
       modifiedDate = modifiedDate,
       title = title,
       path = path,
-      id = None
+      id = math.abs(Random.nextLong())
     )
 
   implicit def showForNote: Show[Note] = new Show[Note] {

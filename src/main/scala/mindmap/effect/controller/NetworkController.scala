@@ -26,6 +26,7 @@ class NetworkController[F[_]: MonadError[*[_], Throwable]: Defer[
   mindmap: MindmapAlgebra[F],
   zettel: ZettelkastenAlgebra[F]
 ) extends Http4sDsl[F] {
+  private implicit val formats = Serialization.formats(NoTypeHints)
   private implicit val log: Logging[F] =
     Logging.Make[F].forService[NetworkController[F]]
 
@@ -61,9 +62,14 @@ class NetworkController[F[_]: MonadError[*[_], Throwable]: Defer[
         error"Error: ${e.getMessage()}"
       }
     sub <- mindmap.subnetwork(tag)
-    resp <- {
-      implicit val formats = Serialization.formats(NoTypeHints)
-      Ok(Serialization.write(sub))
+    resp <- Ok(Serialization.write(sub))
+  } yield (resp)
+
+  private def find(id: Long): F[Response[F]] = for {
+    nodeOpt <- mindmap.find(id)
+    resp <- nodeOpt match {
+      case Some(node) => Ok(Serialization.write(node))
+      case None => NotFound()
     }
   } yield (resp)
 
@@ -71,5 +77,6 @@ class NetworkController[F[_]: MonadError[*[_], Throwable]: Defer[
     case GET -> Root => network()
     case GET -> Root / "note" / title => noteNetwork(title)
     case GET -> Root / "tag" / title => tagNetwork(title)
+    case GET -> Root / "node" / LongVar(id) => find(id)
   }
 }

@@ -99,7 +99,13 @@ async function initializeSubnetwork(pageName) {
 
     window.location = new URL('/notes/' + title, window.location.origin)
   });
+
+  network.on("stabilized", function (obj) {
+    network;
+  });
+
+  return network;
 }
 
 var pageName = document.getElementsByClassName('post-title').item(0).textContent.split('.')[0]
-initializeSubnetwork(pageName);
+var res = initializeSubnetwork(pageName);
