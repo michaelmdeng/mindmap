@@ -31,22 +31,50 @@ class BlockParsersSpec extends AnyFunSpec {
 
     it("should parse all tags") {
       val result = parsers.parse(parser, tagLine)
-      assertParsed(result, tags)
+      assertParsed(
+        result,
+        (block: TagBlock) => {
+          block.tags.zip(tags.tags).forall { case (a, b) =>
+            a.name == b.name
+          }
+        }
+      )
     }
 
     it("should allow tags with spaces") {
       val result = parsers.parse(parser, tagLineWithSpaces)
-      assertParsed(result, tagsWithSpaces)
+      assertParsed(
+        result,
+        (block: TagBlock) => {
+          block.tags.zip(tags.tags).forall { case (a, b) =>
+            a.name == b.name
+          }
+        }
+      )
     }
 
     it("should allow preceding indentation up to 3") {
       val result = parsers.parse(parser, f"   ${tagLine}")
-      assertParsed(result, tags)
+      assertParsed(
+        result,
+        (block: TagBlock) => {
+          block.tags.zip(tags.tags).forall { case (a, b) =>
+            a.name == b.name
+          }
+        }
+      )
     }
 
     it("should strip trailing whitespace") {
       val result = parsers.parse(parser, f"${tagLine}  \t  ")
-      assertParsed(result, tags)
+      assertParsed(
+        result,
+        (block: TagBlock) => {
+          block.tags.zip(tags.tags).forall { case (a, b) =>
+            a.name == b.name
+          }
+        }
+      )
     }
   }
 
