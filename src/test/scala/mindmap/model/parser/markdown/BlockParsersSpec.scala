@@ -23,11 +23,11 @@ class BlockParsersSpec extends AnyFunSpec {
 
   describe("tags") {
     val parser = parsers.tags
-    val tags = TagBlock(List(Tag("foo"), Tag("bar")))
-    val tagsWithSpaces = TagBlock(tags.tags ++ List(Tag("tag with space")))
-    val tagLine = ":" + tags.tags.map(_.name).mkString(":") + ":"
+    val tags = TagBlock(List("foo", "bar"))
+    val tagsWithSpaces = TagBlock(tags.tags ++ List("tag with space"))
+    val tagLine = ":" + tags.tags.mkString(":") + ":"
     val tagLineWithSpaces =
-      ":" + tagsWithSpaces.tags.map(_.name).mkString(":") + ":"
+      ":" + tagsWithSpaces.tags.mkString(":") + ":"
 
     it("should parse all tags") {
       val result = parsers.parse(parser, tagLine)
@@ -35,7 +35,7 @@ class BlockParsersSpec extends AnyFunSpec {
         result,
         (block: TagBlock) => {
           block.tags.zip(tags.tags).forall { case (a, b) =>
-            a.name == b.name
+            a == b
           }
         }
       )
@@ -47,7 +47,7 @@ class BlockParsersSpec extends AnyFunSpec {
         result,
         (block: TagBlock) => {
           block.tags.zip(tags.tags).forall { case (a, b) =>
-            a.name == b.name
+            a == b
           }
         }
       )
@@ -59,7 +59,7 @@ class BlockParsersSpec extends AnyFunSpec {
         result,
         (block: TagBlock) => {
           block.tags.zip(tags.tags).forall { case (a, b) =>
-            a.name == b.name
+            a == b
           }
         }
       )
@@ -71,7 +71,7 @@ class BlockParsersSpec extends AnyFunSpec {
         result,
         (block: TagBlock) => {
           block.tags.zip(tags.tags).forall { case (a, b) =>
-            a.name == b.name
+            a == b
           }
         }
       )
