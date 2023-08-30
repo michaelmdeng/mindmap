@@ -8,7 +8,7 @@ import mindmap.model.Tag
 sealed trait Block
 sealed trait Paragraph
 
-case class TagBlock(tags: List[Tag]) extends Block with Paragraph
+case class TagBlock(tags: List[String]) extends Block with Paragraph
 case class CodeBlock(code: String, language: Option[String])
     extends Block
     with Paragraph

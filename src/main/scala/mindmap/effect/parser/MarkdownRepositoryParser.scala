@@ -49,7 +49,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
       }
     } yield (paragraphs)
 
-  private def parseTags(content: String): F[Set[Tag]] =
+  private def parseTags(content: String): F[Set[String]] =
     for {
       paragraphs <- parseParagraphs(content)
     } yield {
@@ -57,7 +57,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
         .map(paragraph => {
           paragraph match {
             case TagBlock(ts) => ts.toSet
-            case _ => Set[Tag]()
+            case _ => Set[String]()
           }
         })
         .reduce(_ ++ _)
@@ -112,7 +112,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
               tags <- parseTags(note.content)
               filteredTags <- tags.toList.traverseFilter(tag => {
                 for {
-                  isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
+                  isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(Tag(tag))
                 } yield {
                   isIgnoreTag match {
                     case true => None
@@ -120,7 +120,7 @@ class MarkdownRepositoryParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Parallel[
                   }
                 }
               })
-            } yield (filteredTags.toSet)
+            } yield (filteredTags.toSet.map((s: String) => Tag(s)))
           )
         })
         .parSequence
