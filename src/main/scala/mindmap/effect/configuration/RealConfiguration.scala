@@ -35,12 +35,19 @@ object RealConfiguration {
       private val collectionPath: File = new File(rootPath, "wiki")
       private val notePath: File = new File(rootPath, "html")
 
+      private var _collectionConfig: Option[CollectionConfiguration] = None
+
       def root(): F[File] = collectionConfig().map(_.root)
       def maxDepth(): F[Int] = collectionConfig().map(_.depth)
 
       def isIgnoreFile(path: Path): F[Boolean] =
         for {
-          config <- collectionConfig()
+          config <-
+            if (_collectionConfig.isDefined) {
+              _collectionConfig.get.pure[F]
+            } else {
+              collectionConfig()
+            }
         } yield {
           val isMarkdown = markdownFiles.matches(path)
           val isIgnore = config.ignores
@@ -71,7 +78,10 @@ object RealConfiguration {
                 )
             }
         } yield {
-          CollectionConfiguration(collectionPath, ignores = ignores)
+          val config =
+            CollectionConfiguration(collectionPath, ignores = ignores)
+          _collectionConfig = Some(config)
+          config
         }
 
       def repositoryConfig(): F[RepositoryConfiguration] =

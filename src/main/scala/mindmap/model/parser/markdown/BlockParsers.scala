@@ -14,7 +14,7 @@ class BlockParsers extends SharedParsers {
     for {
       _ <- spaces(0, 3)
       _ <- tagSeparator
-      tags <- rep1(regex("[^:\n]+:".r)).map(ts => ts.map(s => Tag(s.init)))
+      tags <- rep1(regex("[^:\n]+:".r)).map(ts => ts.map(s => s.init))
     } yield (TagBlock(tags))
 
   def header: Parser[Header] =

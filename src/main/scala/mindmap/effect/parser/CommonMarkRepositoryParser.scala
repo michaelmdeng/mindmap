@@ -50,13 +50,13 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[
 
   private val blockParsers = new BlockParsers()
 
-  private def parseTags(content: String): F[Set[Tag]] =
+  private def parseTags(content: String): F[Set[String]] =
     for {
       result <- blockParsers.parse(blockParsers.tags, content).pure[F]
     } yield {
       result match {
         case blockParsers.Success(b, _) => b.tags.toSet
-        case e: blockParsers.NoSuccess => Set[Tag]()
+        case e: blockParsers.NoSuccess => Set[String]()
       }
     }
 
@@ -83,6 +83,23 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[
 
   def parseRepository(collection: Collection): F[Repository] =
     for {
+      parsedTags: Set[Tag] <- collection.notes
+        .map(note => {
+          debug"parse tags for note: ${note.title}" >>
+            parseTags(note.content)
+        })
+        .parSequence
+        .map(_.flatten.toSet.map((tagStr: String) => Tag(tagStr)))
+      filteredTags: Set[Tag] <- parsedTags.toList
+        .parTraverseFilter(tag => {
+          for {
+            isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
+          } yield {
+            Option.when(!isIgnoreTag)(tag)
+          }
+        })
+        .map(_.toSet)
+      filteredTagsMap = filteredTags.map(tag => (tag.name, tag)).toMap
       (noteTags, noteLinks) <- (
         collection.notes
           .map(note => {
@@ -91,13 +108,13 @@ class CommonMarkRepositoryParser[F[_]: ContextShift[*[_]]: Effect[
               for {
                 tags <- debug"parse tags for note: ${note.title}" >>
                   parseTags(note.content)
-                filteredTags <- tags.toList.parTraverseFilter(tag => {
-                  for {
-                    isIgnoreTag <- ConfigurationAlgebra[F].isIgnoreTag(tag)
-                  } yield {
-                    Option.when(!isIgnoreTag)(tag)
+                filteredTags = tags.flatMap(tag =>
+                  if (filteredTagsMap.contains(tag)) {
+                    Some(filteredTagsMap(tag))
+                  } else {
+                    None
                   }
-                })
+                )
               } yield (filteredTags.toSet)
             )
           })

@@ -34,7 +34,9 @@ class FileNoteParser[F[_]: ContextShift[*[_]]: Effect[*[_]]: Logging.Make](
         Effect[F]
           .delay(Source.fromFile(file).getLines()) <* ContextShift[F].shift
       c <- debug"generate file content: ${file.toString()}" >>
-        Effect[F].delay(lines.reduce(_ + "\n" + _)) <* ContextShift[F].shift
+        Effect[F].delay {
+          lines.reduceOption(_ + "\n" + _).getOrElse("")
+        } <* ContextShift[F].shift
     } yield (c)
 
   def createDate(): F[LocalDateTime] = Effect[F].delay {
