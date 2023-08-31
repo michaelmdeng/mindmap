@@ -31,13 +31,29 @@ class MemoryMindmap[F[_]: MonadError[*[_], Throwable]](
     )
     neighborhood = Set(node).union(node.neighbors)
     nodeMap = neighborhood
-      .map(graphNode => {
+      .flatMap(graphNode => {
         val entity = graphNode.toOuter
-        val networkNode = entity match {
-          case note: Note => NetworkNode.noteNode(note.title, note.content)
-          case tag: Tag => NetworkNode.tagNode(tag.name)
+        val subNeighborhood = entity match {
+          case note: Note => {
+            val networkNode = NetworkNode.noteNode(note.title, note.content)
+            Set((entity, networkNode))
+          }
+          case tag: Tag => {
+            val networkNode = NetworkNode.tagNode(tag.name)
+            val tagNeighborhood = graphNode.neighbors.map(tagNode => {
+              val tagEntity = tagNode.toOuter
+              val tagNeighborNode = tagEntity match {
+                case note: Note =>
+                  NetworkNode.noteNode(note.title, note.content)
+                case tag: Tag => NetworkNode.tagNode(tag.name)
+              }
+              (tagEntity, tagNeighborNode)
+            })
+
+            Set((entity, networkNode)) ++ tagNeighborhood
+          }
         }
-        (entity, networkNode)
+        subNeighborhood
       })
       .toMap
     edges = neighborhood
