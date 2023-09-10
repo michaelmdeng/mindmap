@@ -1,12 +1,10 @@
 package mindmap.model.configuration
 
-import mindmap.model.Tag
-
-case class RepositoryConfiguration(excludeTags: Set[Tag])
+case class RepositoryConfiguration(excludeTags: Set[String])
 
 object RepositoryConfiguration {
   final val DEFAULT: RepositoryConfiguration =
     RepositoryConfiguration(
-      Set(Tag("article"), Tag("book"), Tag("architecture"), Tag("apache"))
+      Set("article", "book", "architecture", "apache")
     )
 }
