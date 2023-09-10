@@ -91,7 +91,7 @@ object RealConfiguration {
         for {
           config <- RepositoryConfiguration.DEFAULT.pure[F]
         } yield {
-          config.excludeTags.contains(tag)
+          config.excludeTags.contains(tag.name)
         }
 
       def networkConfig(): F[NetworkConfiguration] =
